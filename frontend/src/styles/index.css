@@ -40,9 +40,13 @@ html, body, #root {
   padding: 48px 24px 80px;
 }
 
-.app-header {
+/* .app-header {
   flex-shrink: 0;
   padding: 20px 0 12px;
+} */
+ .app-header {
+  flex-shrink: 0;
+  padding: 10px 0 6px;
 }
 
 .app-header h1 {
@@ -94,7 +98,7 @@ main > * {
   background: var(--surface);
 }
 
-.tutorial-player {
+/* .tutorial-player {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -103,13 +107,31 @@ main > * {
   flex-direction: column;
   min-height: 0;
   width: 100%;
+} */
+
+.tutorial-player {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 10px 16px 14px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
 }
 
-.tutorial-header {
+/* .tutorial-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 10px;
+  flex-shrink: 0;
+} */
+ .tutorial-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
   flex-shrink: 0;
 }
 
@@ -127,10 +149,16 @@ main > * {
   font-size: 22px;
 }
 
-.progress-track {
+/* .progress-track {
   display: flex;
   gap: 6px;
   margin-bottom: 12px;
+  flex-shrink: 0;
+} */
+.progress-track {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 6px;
   flex-shrink: 0;
 }
 
@@ -213,6 +241,7 @@ main > * {
 
 .instruction-card {
   position: absolute;
+  z-index: 5;
   width: max-content;
   max-width: 260px;
   min-width: 120px;
@@ -239,11 +268,18 @@ main > * {
   font-size: 14px;
 }
 
-.tutorial-controls {
+/* .tutorial-controls {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-top: 20px;
+} */
+ .tutorial-controls {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  flex-shrink: 0;
 }
 
 .step-count {

@@ -108,7 +108,10 @@ export default function TutorialPlayer({ tutorial, onExit }) {
             width={step.highlightWidth}
             height={step.highlightHeight}
           />
-          {step.highlightWidth > 0 && (
+          {/* {step.highlightWidth > 0 && (
+            <InstructionCard x={step.highlightX} y={cardY} text={step.instructionText} />
+          )} */}
+                    {Number(step.highlightWidth) > 0 && (
             <InstructionCard x={step.highlightX} y={cardY} text={step.instructionText} />
           )}
         </div>
