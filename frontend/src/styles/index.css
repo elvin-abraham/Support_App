@@ -27,12 +27,11 @@ html, body, #root {
   flex-direction: column;
   height: 100vh;
   width: 100%;
-  padding: 0 16px 12px;
+  padding: 12px 12px;
   overflow: hidden;
 }
 
-/* The selector screen (before a tutorial is picked) still reads
-   comfortably centered rather than full-bleed. */
+/* Selector screen still reads comfortably centered rather than full-bleed. */
 .app-shell:has(.selector-card) {
   max-width: 760px;
   margin: 0 auto;
@@ -41,20 +40,25 @@ html, body, #root {
   padding: 48px 24px 80px;
 }
 
+/* While a tutorial is active, give it essentially the whole viewport. */
+.app-shell:has(.tutorial-player) {
+  padding: 6px;
+}
+
 .app-header {
   flex-shrink: 0;
-  padding: 8px 0 4px;
+  padding: 8px 0 16px;
 }
 
 .app-header h1 {
-  font-size: 20px;
+  font-size: 22px;
   margin: 0 0 2px;
 }
 
 .app-header p {
   color: var(--muted);
   margin: 0;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 main {
@@ -95,78 +99,31 @@ main > * {
   background: var(--surface);
 }
 
+/* The whole player is now just a positioning context — its size comes
+   entirely from the stage, since header/controls float over it instead
+   of taking their own row. */
 .tutorial-player {
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  padding: 8px 14px 12px;
-  display: flex;
-  flex-direction: column;
-  min-height: 0;
-  width: 100%;
-}
-
-.tutorial-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 6px;
-  flex-shrink: 0;
-}
-
-.eyebrow {
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  font-size: 11px;
-  color: var(--accent);
-  font-weight: 700;
-  margin: 0 0 2px;
-}
-
-.tutorial-header h2 {
-  margin: 0;
-  font-size: 18px;
-}
-
-.progress-track {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 6px;
-  flex-shrink: 0;
-}
-
-.progress-dot {
-  height: 5px;
-  flex: 1;
-  border-radius: 999px;
-  background: var(--line);
-}
-
-.progress-dot.filled {
-  background: var(--accent);
-}
-
-/* Full available area — no border here, this is just a centering
-   canvas. This is what the frame's max size is measured against. */
-.screenshot-stage {
   position: relative;
-  flex: 1;
-  min-height: 0;
+  height: 100%;
   width: 100%;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.screenshot-stage {
+  position: absolute;
+  inset: 0;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
 }
 
 /* Sized in JS to exactly match the image's own aspect ratio, scaled up
-   as large as the stage allows. The border hugs the image with no
-   empty space inside it — this is what HighlightBox/InstructionCard
-   percentages are positioned relative to. */
+   as large as the stage allows — no empty space trapped inside it. */
 .screenshot-frame {
   position: relative;
-  border: 1px solid var(--line);
-  border-radius: 10px;
   overflow: hidden;
   line-height: 0;
   background: var(--bg);
@@ -178,11 +135,74 @@ main > * {
   height: 100%;
 }
 
-/* If the screenshot image is missing, keep a sane placeholder size
-   rather than collapsing to zero. */
 .screenshot-frame:has(img[src=""])  {
   width: 480px;
   height: 320px;
+}
+
+/* Floating bars — positioned over the image, translucent gradient so
+   the image stays legible underneath. */
+.overlay-top {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  padding: 10px 16px 16px;
+  background: linear-gradient(to bottom, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0));
+  pointer-events: none;
+}
+
+.overlay-top .btn-ghost {
+  pointer-events: auto;
+}
+
+.overlay-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 10;
+  padding: 16px 16px 10px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.6), rgba(0, 0, 0, 0));
+}
+
+.tutorial-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.eyebrow {
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  font-size: 11px;
+  color: #8fb4ff;
+  font-weight: 700;
+  margin: 0 0 2px;
+}
+
+.tutorial-header h2 {
+  margin: 0;
+  font-size: 18px;
+  color: #fff;
+}
+
+.progress-track {
+  display: flex;
+  gap: 6px;
+}
+
+.progress-dot {
+  height: 5px;
+  flex: 1;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.3);
+}
+
+.progress-dot.filled {
+  background: var(--accent);
 }
 
 .highlight-box {
@@ -219,27 +239,23 @@ main > * {
 }
 
 .final-note {
-  margin-top: 10px;
-  background: #e9f9ef;
-  border: 1px solid #bfe8cd;
-  color: var(--success);
+  background: rgba(31, 157, 85, 0.9);
+  color: #fff;
   padding: 10px 14px;
   border-radius: 8px;
   font-size: 13px;
-  flex-shrink: 0;
+  margin-bottom: 8px;
 }
 
 .tutorial-controls {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-top: 8px;
-  flex-shrink: 0;
 }
 
 .step-count {
   font-size: 13px;
-  color: var(--muted);
+  color: #fff;
 }
 
 .btn-primary, .btn-secondary, .btn-ghost {
@@ -259,7 +275,7 @@ main > * {
 .btn-primary:hover { background: #2559c7; }
 
 .btn-secondary {
-  background: var(--surface);
+  background: rgba(255, 255, 255, 0.95);
   border-color: var(--line);
   color: var(--ink);
 }
@@ -272,6 +288,6 @@ main > * {
 .btn-ghost {
   background: transparent;
   border: none;
-  color: var(--muted);
+  color: #fff;
   text-decoration: underline;
 }
