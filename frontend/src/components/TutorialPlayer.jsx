@@ -67,7 +67,7 @@ export default function TutorialPlayer({ tutorial, onExit }) {
         </div>
       </div>
 
-      {step.isFinalStep && (
+      {Boolean(step.isFinalStep) && (
         <div className="final-note">
           <p>{step.instructionText}</p>
         </div>

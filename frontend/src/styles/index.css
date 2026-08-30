@@ -200,7 +200,9 @@ main > * {
 
 .instruction-card {
   position: absolute;
+  width: max-content;
   max-width: 260px;
+  min-width: 120px;
   background: var(--ink);
   color: #fff;
   padding: 10px 14px;
