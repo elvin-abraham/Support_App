@@ -19,9 +19,10 @@ export default function TutorialPlayer({ tutorial, onExit }) {
   const highlightWidth = Number(step?.highlightWidth) || 0;
   const highlightHeight = Number(step?.highlightHeight) || 0;
 
-  // "stage" now spans the ENTIRE player box (header/controls float over
-  // it as overlays instead of taking their own flow space), so the
-  // image gets as much of the screen as its own aspect ratio allows.
+  // "stage" is the space left over between the top bar and bottom bar
+  // (which now each take their own row again, not floating overlays).
+  // "frame" is sized in JS to exactly match the image's own aspect
+  // ratio, scaled up as large as the stage allows.
   const stageRef = useRef(null);
   const imgRef = useRef(null);
   const [renderedSize, setRenderedSize] = useState(null);
@@ -71,6 +72,27 @@ export default function TutorialPlayer({ tutorial, onExit }) {
 
   return (
     <div className="tutorial-player">
+      {/* Top bar: product name, title, exit, progress dots — its own row,
+          sitting directly above the image, not on top of it. */}
+      <div className="top-bar">
+        <div className="tutorial-header">
+          <div>
+            <p className="eyebrow">{tutorial.productName}</p>
+            <h2>{tutorial.title}</h2>
+          </div>
+          {onExit && (
+            <button className="btn-ghost" onClick={onExit}>
+              Exit tutorial
+            </button>
+          )}
+        </div>
+        <div className="progress-track" aria-label={`Step ${stepIndex + 1} of ${steps.length}`}>
+          {steps.map((s, i) => (
+            <div key={s.stepNumber} className={`progress-dot ${i <= stepIndex ? "filled" : ""}`} />
+          ))}
+        </div>
+      </div>
+
       <div className="screenshot-stage" ref={stageRef}>
         <div
           className="screenshot-frame"
@@ -95,28 +117,9 @@ export default function TutorialPlayer({ tutorial, onExit }) {
         </div>
       </div>
 
-      {/* Floating overlay bar — sits on top of the image, doesn't take its own row */}
-      <div className="overlay-top">
-        <div className="tutorial-header">
-          <div>
-            <p className="eyebrow">{tutorial.productName}</p>
-            <h2>{tutorial.title}</h2>
-          </div>
-          {onExit && (
-            <button className="btn-ghost" onClick={onExit}>
-              Exit tutorial
-            </button>
-          )}
-        </div>
-        <div className="progress-track" aria-label={`Step ${stepIndex + 1} of ${steps.length}`}>
-          {steps.map((s, i) => (
-            <div key={s.stepNumber} className={`progress-dot ${i <= stepIndex ? "filled" : ""}`} />
-          ))}
-        </div>
-      </div>
-
-      {/* Floating overlay bar — bottom controls, same idea */}
-      <div className="overlay-bottom">
+      {/* Bottom bar: Back/Next, step count — its own row, directly below
+          the image. */}
+      <div className="bottom-bar">
         {Boolean(step.isFinalStep) && (
           <div className="final-note">
             <p>{step.instructionText}</p>
@@ -147,7 +150,6 @@ export default function TutorialPlayer({ tutorial, onExit }) {
 
 
 
-
 // import { useState, useRef, useEffect, useCallback } from "react";
 // import HighlightBox from "./HighlightBox.jsx";
 // import InstructionCard from "./InstructionCard.jsx";
@@ -163,17 +165,15 @@ export default function TutorialPlayer({ tutorial, onExit }) {
 //   const isLastStep = stepIndex === steps.length - 1;
 
 //   // MySQL DECIMAL columns come back as strings (e.g. "28.00"), not
-//   // numbers. Coerce once here so every arithmetic use below is safe —
-//   // otherwise "28.00" + "8.00" silently string-concatenates into NaN.
+//   // numbers. Coerce once here so every arithmetic use below is safe.
 //   const highlightX = Number(step?.highlightX) || 0;
 //   const highlightY = Number(step?.highlightY) || 0;
 //   const highlightWidth = Number(step?.highlightWidth) || 0;
 //   const highlightHeight = Number(step?.highlightHeight) || 0;
 
-//   // "stage" is the full available area (whatever leftover shape the
-//   // page layout gives us). "frame" is sized in JS to exactly match the
-//   // image's own aspect ratio, scaled up as large as the stage allows —
-//   // so the bordered box hugs the image with zero empty space inside it.
+//   // "stage" now spans the ENTIRE player box (header/controls float over
+//   // it as overlays instead of taking their own flow space), so the
+//   // image gets as much of the screen as its own aspect ratio allows.
 //   const stageRef = useRef(null);
 //   const imgRef = useRef(null);
 //   const [renderedSize, setRenderedSize] = useState(null);
@@ -193,17 +193,13 @@ export default function TutorialPlayer({ tutorial, onExit }) {
 //     });
 //   }, []);
 
-//   // Re-measure whenever the step (and therefore the image) changes.
 //   useEffect(() => {
 //     setRenderedSize(null);
-//     // If the browser already has this image cached, "load" may not fire
-//     // again — check `complete` and measure immediately in that case.
 //     if (imgRef.current && imgRef.current.complete) {
 //       measure();
 //     }
 //   }, [step?.screenshotUrl, measure]);
 
-//   // Re-measure if the window/stage is resized.
 //   useEffect(() => {
 //     if (!stageRef.current) return;
 //     const observer = new ResizeObserver(() => measure());
@@ -223,30 +219,10 @@ export default function TutorialPlayer({ tutorial, onExit }) {
 //     if (stepIndex > 0) setStepIndex((i) => i - 1);
 //   }
 
-//   // Place the instruction card just under the highlight, clamped so it
-//   // doesn't run off the bottom of the screenshot.
 //   const cardY = Math.min(highlightY + highlightHeight + 2, 88);
 
 //   return (
 //     <div className="tutorial-player">
-//       <div className="tutorial-header">
-//         <div>
-//           <p className="eyebrow">{tutorial.productName}</p>
-//           <h2>{tutorial.title}</h2>
-//         </div>
-//         {onExit && (
-//           <button className="btn-ghost" onClick={onExit}>
-//             Exit tutorial
-//           </button>
-//         )}
-//       </div>
-
-//       <div className="progress-track" aria-label={`Step ${stepIndex + 1} of ${steps.length}`}>
-//         {steps.map((s, i) => (
-//           <div key={s.stepNumber} className={`progress-dot ${i <= stepIndex ? "filled" : ""}`} />
-//         ))}
-//       </div>
-
 //       <div className="screenshot-stage" ref={stageRef}>
 //         <div
 //           className="screenshot-frame"
@@ -271,28 +247,50 @@ export default function TutorialPlayer({ tutorial, onExit }) {
 //         </div>
 //       </div>
 
-//       {Boolean(step.isFinalStep) && (
-//         <div className="final-note">
-//           <p>{step.instructionText}</p>
+//       {/* Floating overlay bar — sits on top of the image, doesn't take its own row */}
+//       <div className="overlay-top">
+//         <div className="tutorial-header">
+//           <div>
+//             <p className="eyebrow">{tutorial.productName}</p>
+//             <h2>{tutorial.title}</h2>
+//           </div>
+//           {onExit && (
+//             <button className="btn-ghost" onClick={onExit}>
+//               Exit tutorial
+//             </button>
+//           )}
 //         </div>
-//       )}
+//         <div className="progress-track" aria-label={`Step ${stepIndex + 1} of ${steps.length}`}>
+//           {steps.map((s, i) => (
+//             <div key={s.stepNumber} className={`progress-dot ${i <= stepIndex ? "filled" : ""}`} />
+//           ))}
+//         </div>
+//       </div>
 
-//       <div className="tutorial-controls">
-//         <button className="btn-secondary" onClick={goBack} disabled={stepIndex === 0}>
-//           Back
-//         </button>
-//         <span className="step-count">
-//           Step {stepIndex + 1} of {steps.length}
-//         </span>
-//         {isLastStep ? (
-//           <button className="btn-primary" onClick={onExit}>
-//             Done
-//           </button>
-//         ) : (
-//           <button className="btn-primary" onClick={goNext}>
-//             Next
-//           </button>
+//       {/* Floating overlay bar — bottom controls, same idea */}
+//       <div className="overlay-bottom">
+//         {Boolean(step.isFinalStep) && (
+//           <div className="final-note">
+//             <p>{step.instructionText}</p>
+//           </div>
 //         )}
+//         <div className="tutorial-controls">
+//           <button className="btn-secondary" onClick={goBack} disabled={stepIndex === 0}>
+//             Back
+//           </button>
+//           <span className="step-count">
+//             Step {stepIndex + 1} of {steps.length}
+//           </span>
+//           {isLastStep ? (
+//             <button className="btn-primary" onClick={onExit}>
+//               Done
+//             </button>
+//           ) : (
+//             <button className="btn-primary" onClick={goNext}>
+//               Next
+//             </button>
+//           )}
+//         </div>
 //       </div>
 //     </div>
 //   );
