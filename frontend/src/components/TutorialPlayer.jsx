@@ -12,6 +12,14 @@ export default function TutorialPlayer({ tutorial, onExit }) {
   const step = steps[stepIndex];
   const isLastStep = stepIndex === steps.length - 1;
 
+  // MySQL DECIMAL columns come back as strings (e.g. "28.00"), not
+  // numbers. Coerce once here so every arithmetic use below is safe —
+  // otherwise "28.00" + "8.00" silently string-concatenates into NaN.
+  const highlightX = Number(step?.highlightX) || 0;
+  const highlightY = Number(step?.highlightY) || 0;
+  const highlightWidth = Number(step?.highlightWidth) || 0;
+  const highlightHeight = Number(step?.highlightHeight) || 0;
+
   const frameRef = useRef(null);
   const imgRef = useRef(null);
   // The wrapper's exact rendered size in pixels, computed to match how
@@ -68,7 +76,7 @@ export default function TutorialPlayer({ tutorial, onExit }) {
 
   // Place the instruction card just under the highlight, clamped so it
   // doesn't run off the bottom of the screenshot.
-  const cardY = Math.min(step.highlightY + step.highlightHeight + 2, 88);
+  const cardY = Math.min(highlightY + highlightHeight + 2, 88);
 
   return (
     <div className="tutorial-player">
@@ -103,16 +111,13 @@ export default function TutorialPlayer({ tutorial, onExit }) {
             onLoad={measure}
           />
           <HighlightBox
-            x={step.highlightX}
-            y={step.highlightY}
-            width={step.highlightWidth}
-            height={step.highlightHeight}
+            x={highlightX}
+            y={highlightY}
+            width={highlightWidth}
+            height={highlightHeight}
           />
-          {/* {step.highlightWidth > 0 && (
-            <InstructionCard x={step.highlightX} y={cardY} text={step.instructionText} />
-          )} */}
-                    {Number(step.highlightWidth) > 0 && (
-            <InstructionCard x={step.highlightX} y={cardY} text={step.instructionText} />
+          {highlightWidth > 0 && (
+            <InstructionCard x={highlightX} y={cardY} text={step.instructionText} />
           )}
         </div>
       </div>
@@ -147,7 +152,8 @@ export default function TutorialPlayer({ tutorial, onExit }) {
 
 
 
-// import { useState } from "react";
+
+// import { useState, useRef, useEffect, useCallback } from "react";
 // import HighlightBox from "./HighlightBox.jsx";
 // import InstructionCard from "./InstructionCard.jsx";
 
@@ -160,6 +166,48 @@ export default function TutorialPlayer({ tutorial, onExit }) {
 //   const steps = tutorial.steps || [];
 //   const step = steps[stepIndex];
 //   const isLastStep = stepIndex === steps.length - 1;
+
+//   const frameRef = useRef(null);
+//   const imgRef = useRef(null);
+//   // The wrapper's exact rendered size in pixels, computed to match how
+//   // the browser would "contain"-fit the image inside the frame. We size
+//   // the wrapper to this exactly (instead of relying on CSS max-height
+//   // percentages, which don't resolve correctly here) so the highlight
+//   // box and instruction card always line up with the visible image.
+//   const [renderedSize, setRenderedSize] = useState(null);
+
+//   const measure = useCallback(() => {
+//     const frame = frameRef.current;
+//     const img = imgRef.current;
+//     if (!frame || !img || !img.naturalWidth || !img.naturalHeight) return;
+
+//     const frameW = frame.clientWidth;
+//     const frameH = frame.clientHeight;
+//     const scale = Math.min(frameW / img.naturalWidth, frameH / img.naturalHeight);
+
+//     setRenderedSize({
+//       width: img.naturalWidth * scale,
+//       height: img.naturalHeight * scale,
+//     });
+//   }, []);
+
+//   // Re-measure whenever the step (and therefore the image) changes.
+//   useEffect(() => {
+//     setRenderedSize(null);
+//     // If the browser already has this image cached, "load" may not fire
+//     // again — check `complete` and measure immediately in that case.
+//     if (imgRef.current && imgRef.current.complete) {
+//       measure();
+//     }
+//   }, [step?.screenshotUrl, measure]);
+
+//   // Re-measure if the window/frame is resized.
+//   useEffect(() => {
+//     if (!frameRef.current) return;
+//     const observer = new ResizeObserver(() => measure());
+//     observer.observe(frameRef.current);
+//     return () => observer.disconnect();
+//   }, [measure]);
 
 //   if (!step) {
 //     return <p>This tutorial has no steps yet.</p>;
@@ -197,20 +245,28 @@ export default function TutorialPlayer({ tutorial, onExit }) {
 //         ))}
 //       </div>
 
-//       <div className="screenshot-frame">
-//         {/* screenshot-wrapper shrink-wraps to the image's actual rendered
-//             size (not the outer frame), so percentage-based highlight
-//             positions always line up with real pixels on the image even
-//             when the frame's aspect ratio differs from the screenshot's. */}
-//         <div className="screenshot-wrapper">
-//           <img src={step.screenshotUrl} alt={`Step ${step.stepNumber}`} className="screenshot" />
+//       <div className="screenshot-frame" ref={frameRef}>
+//         <div
+//           className="screenshot-wrapper"
+//           style={renderedSize ? { width: renderedSize.width, height: renderedSize.height } : undefined}
+//         >
+//           <img
+//             ref={imgRef}
+//             src={step.screenshotUrl}
+//             alt={`Step ${step.stepNumber}`}
+//             className="screenshot"
+//             onLoad={measure}
+//           />
 //           <HighlightBox
 //             x={step.highlightX}
 //             y={step.highlightY}
 //             width={step.highlightWidth}
 //             height={step.highlightHeight}
 //           />
-//           {step.highlightWidth > 0 && (
+//           {/* {step.highlightWidth > 0 && (
+//             <InstructionCard x={step.highlightX} y={cardY} text={step.instructionText} />
+//           )} */}
+//                     {Number(step.highlightWidth) > 0 && (
 //             <InstructionCard x={step.highlightX} y={cardY} text={step.instructionText} />
 //           )}
 //         </div>
