@@ -18,20 +18,52 @@ body {
   color: var(--ink);
 }
 
+html, body, #root {
+  height: 100%;
+}
+
 .app-shell {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  padding: 0 24px 24px;
+  overflow: hidden;
+}
+
+/* The selector screen (before a tutorial is picked) still reads
+   comfortably centered rather than full-bleed. */
+.app-shell:has(.selector-card) {
   max-width: 760px;
   margin: 0 auto;
+  height: auto;
+  overflow: visible;
   padding: 48px 24px 80px;
 }
 
+.app-header {
+  flex-shrink: 0;
+  padding: 20px 0 12px;
+}
+
 .app-header h1 {
-  font-size: 28px;
-  margin-bottom: 4px;
+  font-size: 22px;
+  margin: 0 0 2px;
 }
 
 .app-header p {
   color: var(--muted);
-  margin-top: 0;
+  margin: 0;
+  font-size: 13px;
+}
+
+main {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+main > * {
+  width: 100%;
 }
 
 .selector-card {
@@ -66,15 +98,19 @@ body {
   background: var(--surface);
   border: 1px solid var(--line);
   border-radius: 12px;
-  padding: 28px;
-  margin-top: 24px;
+  padding: 16px 20px 20px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  width: 100%;
 }
 
 .tutorial-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 16px;
+  margin-bottom: 10px;
+  flex-shrink: 0;
 }
 
 .eyebrow {
@@ -94,7 +130,8 @@ body {
 .progress-track {
   display: flex;
   gap: 6px;
-  margin-bottom: 20px;
+  margin-bottom: 12px;
+  flex-shrink: 0;
 }
 
 .progress-dot {
@@ -110,16 +147,34 @@ body {
 
 .screenshot-frame {
   position: relative;
+  flex: 1;
+  min-height: 0;
   width: 100%;
   border: 1px solid var(--line);
   border-radius: 10px;
   overflow: hidden;
-  background: #fafbfc;
+  background: #1a1c1f;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Shrink-wraps to the image's actual displayed box (see comment in
+   TutorialPlayer.jsx). This is what HighlightBox/InstructionCard
+   percentages are positioned relative to. */
+.screenshot-wrapper {
+  position: relative;
+  display: inline-block;
+  max-width: 100%;
+  max-height: 100%;
+  line-height: 0;
 }
 
 .screenshot {
   display: block;
-  width: 100%;
+  max-width: 100%;
+  max-height: 100%;
+  width: auto;
   height: auto;
 }
 

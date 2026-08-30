@@ -49,16 +49,22 @@ export default function TutorialPlayer({ tutorial, onExit }) {
       </div>
 
       <div className="screenshot-frame">
-        <img src={step.screenshotUrl} alt={`Step ${step.stepNumber}`} className="screenshot" />
-        <HighlightBox
-          x={step.highlightX}
-          y={step.highlightY}
-          width={step.highlightWidth}
-          height={step.highlightHeight}
-        />
-        {step.highlightWidth > 0 && (
-          <InstructionCard x={step.highlightX} y={cardY} text={step.instructionText} />
-        )}
+        {/* screenshot-wrapper shrink-wraps to the image's actual rendered
+            size (not the outer frame), so percentage-based highlight
+            positions always line up with real pixels on the image even
+            when the frame's aspect ratio differs from the screenshot's. */}
+        <div className="screenshot-wrapper">
+          <img src={step.screenshotUrl} alt={`Step ${step.stepNumber}`} className="screenshot" />
+          <HighlightBox
+            x={step.highlightX}
+            y={step.highlightY}
+            width={step.highlightWidth}
+            height={step.highlightHeight}
+          />
+          {step.highlightWidth > 0 && (
+            <InstructionCard x={step.highlightX} y={cardY} text={step.instructionText} />
+          )}
+        </div>
       </div>
 
       {step.isFinalStep && (
