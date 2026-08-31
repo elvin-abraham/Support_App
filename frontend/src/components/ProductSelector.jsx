@@ -26,13 +26,13 @@ export default function ProductSelector({ onSelectTutorial }) {
   if (loadError) {
     return (
       <div className="selector-card">
-        <p>
-          Couldn't reach the API. Start the backend (<code>npm run dev</code> in{" "}
-          <code>backend/</code>), or preview the tutorial player directly with the
-          sample data using the button below.
+        <p className="selector-lead">
+          We can't reach the tutorial library right now. Start the backend
+          (<code>npm run dev</code> in <code>backend/</code>), or preview a
+          sample walkthrough below in the meantime.
         </p>
         <button className="btn-primary" onClick={() => onSelectTutorial(null)}>
-          Preview sample tutorial
+          Preview a sample tutorial
         </button>
       </div>
     );
@@ -40,8 +40,10 @@ export default function ProductSelector({ onSelectTutorial }) {
 
   return (
     <div className="selector-card">
+      <p className="selector-lead">Pick your product, then the task you need help with.</p>
+
       <label>
-        Product
+        <span className="field-label">Product</span>
         <select
           value={selectedProduct?.slug || ""}
           onChange={(e) => {
@@ -61,7 +63,7 @@ export default function ProductSelector({ onSelectTutorial }) {
 
       {selectedProduct && (
         <label>
-          Question
+          <span className="field-label">Question</span>
           <select
             defaultValue=""
             onChange={(e) => {
