@@ -44,6 +44,24 @@ export async function listTutorialsForProduct(req, res) {
   }
 }
 
+// GET /api/tutorials
+// Flat list of every tutorial across all products, for the admin panel's
+// "manage tutorials" / delete screen.
+export async function listAllTutorials(req, res) {
+  try {
+    const [rows] = await pool.query(
+      `SELECT t.id, t.title, t.slug, p.name AS productName, p.slug AS productSlug
+       FROM tutorials t
+       JOIN products p ON p.id = t.product_id
+       ORDER BY p.name, t.title`
+    );
+    res.json(rows);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch tutorials" });
+  }
+}
+
 // GET /api/products/:productSlug/tutorials/:tutorialSlug
 // Returns the tutorial plus its ordered steps in one payload,
 // which is the exact shape the TutorialPlayer component expects.
@@ -64,16 +82,23 @@ export async function getTutorial(req, res) {
 
     const [steps] = await pool.query(
       `SELECT step_number AS stepNumber, screenshot_url AS screenshotUrl,
-              highlight_x AS highlightX, highlight_y AS highlightY,
-              highlight_width AS highlightWidth, highlight_height AS highlightHeight,
-              instruction_text AS instructionText, is_final_step AS isFinalStep
+              highlights, statements,
+              instruction_text AS finalMessage, is_final_step AS isFinalStep
        FROM tutorial_steps
        WHERE tutorial_id = ?
        ORDER BY step_number`,
       [tutorial.id]
     );
 
-    res.json({ ...tutorial, steps });
+    // mysql2 parses JSON columns automatically, but a NULL column (no
+    // annotations ever added) comes back as null — normalize to [].
+    const normalizedSteps = steps.map((s) => ({
+      ...s,
+      highlights: s.highlights || [],
+      statements: s.statements || [],
+    }));
+
+    res.json({ ...tutorial, steps: normalizedSteps });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch tutorial" });
@@ -96,9 +121,9 @@ export async function createProduct(req, res) {
 }
 
 // POST /api/products/:slug/tutorials
-// Body: { title, slug, description, steps: [{ stepNumber, screenshotUrl, highlightX, highlightY, highlightWidth, highlightHeight, instructionText, isFinalStep }] }
-// This is the endpoint an admin/content tool would call to add a new
-// "How to..." tutorial without any code changes.
+// Body: { title, slug, description, steps: [{ stepNumber, screenshotUrl,
+//         highlights: [{x,y,width,height}], statements: [{x,y,text}],
+//         finalMessage, isFinalStep }] }
 export async function createTutorial(req, res) {
   const { slug: productSlug } = req.params;
   const { title, slug, description, steps = [] } = req.body;
@@ -126,17 +151,17 @@ export async function createTutorial(req, res) {
     for (const step of steps) {
       await connection.query(
         `INSERT INTO tutorial_steps
-          (tutorial_id, step_number, screenshot_url, highlight_x, highlight_y, highlight_width, highlight_height, instruction_text, is_final_step)
-         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+          (tutorial_id, step_number, screenshot_url,
+           highlight_x, highlight_y, highlight_width, highlight_height,
+           highlights, statements, instruction_text, is_final_step)
+         VALUES (?, ?, ?, 0, 0, 0, 0, ?, ?, ?, ?)`,
         [
           tutorialId,
           step.stepNumber,
           step.screenshotUrl,
-          step.highlightX || 0,
-          step.highlightY || 0,
-          step.highlightWidth || 0,
-          step.highlightHeight || 0,
-          step.instructionText,
+          JSON.stringify(step.highlights || []),
+          JSON.stringify(step.statements || []),
+          step.finalMessage || "",
           !!step.isFinalStep,
         ]
       );
@@ -150,5 +175,26 @@ export async function createTutorial(req, res) {
     res.status(500).json({ error: "Failed to create tutorial" });
   } finally {
     connection.release();
+  }
+}
+
+// DELETE /api/products/:productSlug/tutorials/:tutorialSlug
+// tutorial_steps rows are removed automatically via ON DELETE CASCADE.
+export async function deleteTutorial(req, res) {
+  const { productSlug, tutorialSlug } = req.params;
+  try {
+    const [result] = await pool.query(
+      `DELETE t FROM tutorials t
+       JOIN products p ON p.id = t.product_id
+       WHERE p.slug = ? AND t.slug = ?`,
+      [productSlug, tutorialSlug]
+    );
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: "Tutorial not found" });
+    }
+    res.json({ deleted: true });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to delete tutorial" });
   }
 }

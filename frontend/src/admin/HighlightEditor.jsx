@@ -2,29 +2,28 @@ import { useState, useRef, useEffect, useCallback } from "react";
 
 const MIN_SIZE = 3; // smallest allowed highlight, as a percentage of the image
 
-// Renders a screenshot, sized as large as the available space allows
-// (same "fit exactly, no cropping" approach the live tutorial player
-// uses), with an optional draggable/resizable highlight box on top.
+// Renders a screenshot, sized as large as the available space allows,
+// with zero or more independently draggable highlight boxes and zero or
+// more independently draggable statement notes on top of it.
 //
-// - If `highlight` is null/zero-sized and `showHighlight` is true, the
-//   admin can click-and-drag anywhere on the image to draw a new box.
-// - Once a box exists, dragging its body moves it; dragging the small
-//   handle in its bottom-right corner resizes it.
-// - All positions are reported back as percentages of the image (the
-//   same coordinate system the published tutorial uses), so what you
-//   see here is exactly what customers will see.
+// Adding/removing items is driven by the parent (the "+"/"−" buttons
+// live in TutorialBuilder, next to each checkbox) — this component only
+// renders whatever arrays it's given and reports back new positions as
+// percentages of the image, the same coordinate system the published
+// tutorial uses.
 export default function HighlightEditor({
   screenshotUrl,
-  highlight,
-  onChangeHighlight,
-  showHighlight,
-  instructionText,
-  showInstruction,
+  highlights,
+  onChangeHighlights,
+  showHighlights,
+  statements,
+  onChangeStatements,
+  showStatements,
 }) {
   const stageRef = useRef(null);
   const imgRef = useRef(null);
   const [renderedSize, setRenderedSize] = useState(null);
-  const dragState = useRef(null); // { mode: 'move' | 'resize' | 'draw', ... }
+  const dragState = useRef(null); // { kind: 'highlight' | 'statement', index, mode: 'move' | 'resize', startClientX, startClientY, startBox }
 
   const measure = useCallback(() => {
     const stage = stageRef.current;
@@ -46,8 +45,6 @@ export default function HighlightEditor({
     return () => observer.disconnect();
   }, [measure]);
 
-  const hasBox = highlight && highlight.width > 0 && highlight.height > 0;
-
   function clamp(value, min, max) {
     return Math.min(Math.max(value, min), max);
   }
@@ -57,28 +54,18 @@ export default function HighlightEditor({
     return (px / renderedSize[axis]) * 100;
   }
 
-  function handlePointerDown(e, mode) {
-    if (!showHighlight || !renderedSize) return;
+  function startDrag(e, kind, index, mode) {
     e.preventDefault();
     e.stopPropagation();
+    const list = kind === "highlight" ? highlights : statements;
     dragState.current = {
+      kind,
+      index,
       mode,
       startClientX: e.clientX,
       startClientY: e.clientY,
-      startHighlight: highlight || { x: 0, y: 0, width: 0, height: 0 },
+      startBox: { ...list[index] },
     };
-    window.addEventListener("mousemove", handlePointerMove);
-    window.addEventListener("mouseup", handlePointerUp);
-  }
-
-  function handleStageMouseDown(e) {
-    // Only start "draw a new box" if there isn't one yet.
-    if (!showHighlight || hasBox || !renderedSize) return;
-    const rect = imgRef.current.getBoundingClientRect();
-    const startX = clamp(((e.clientX - rect.left) / rect.width) * 100, 0, 100);
-    const startY = clamp(((e.clientY - rect.top) / rect.height) * 100, 0, 100);
-    dragState.current = { mode: "draw", originX: startX, originY: startY };
-    onChangeHighlight({ x: startX, y: startY, width: 0, height: 0 });
     window.addEventListener("mousemove", handlePointerMove);
     window.addEventListener("mouseup", handlePointerUp);
   }
@@ -87,30 +74,27 @@ export default function HighlightEditor({
     const drag = dragState.current;
     if (!drag || !renderedSize) return;
 
-    if (drag.mode === "draw") {
-      const rect = imgRef.current.getBoundingClientRect();
-      const currentX = clamp(((e.clientX - rect.left) / rect.width) * 100, 0, 100);
-      const currentY = clamp(((e.clientY - rect.top) / rect.height) * 100, 0, 100);
-      const x = Math.min(drag.originX, currentX);
-      const y = Math.min(drag.originY, currentY);
-      const width = Math.abs(currentX - drag.originX);
-      const height = Math.abs(currentY - drag.originY);
-      onChangeHighlight({ x, y, width, height });
-      return;
-    }
-
     const deltaXPct = pxToPercent(e.clientX - drag.startClientX, "width");
     const deltaYPct = pxToPercent(e.clientY - drag.startClientY, "height");
-    const start = drag.startHighlight;
+    const start = drag.startBox;
 
-    if (drag.mode === "move") {
-      const x = clamp(start.x + deltaXPct, 0, 100 - start.width);
-      const y = clamp(start.y + deltaYPct, 0, 100 - start.height);
-      onChangeHighlight({ ...start, x, y });
-    } else if (drag.mode === "resize") {
-      const width = clamp(start.width + deltaXPct, MIN_SIZE, 100 - start.x);
-      const height = clamp(start.height + deltaYPct, MIN_SIZE, 100 - start.y);
-      onChangeHighlight({ ...start, width, height });
+    if (drag.kind === "highlight") {
+      const width = start.width ?? 20;
+      const height = start.height ?? 10;
+      if (drag.mode === "move") {
+        const x = clamp(start.x + deltaXPct, 0, 100 - width);
+        const y = clamp(start.y + deltaYPct, 0, 100 - height);
+        updateHighlight(drag.index, { ...start, x, y });
+      } else if (drag.mode === "resize") {
+        const newWidth = clamp(width + deltaXPct, MIN_SIZE, 100 - start.x);
+        const newHeight = clamp(height + deltaYPct, MIN_SIZE, 100 - start.y);
+        updateHighlight(drag.index, { ...start, width: newWidth, height: newHeight });
+      }
+    } else {
+      // Statement boxes only move — their size follows their text, not a drag.
+      const x = clamp(start.x + deltaXPct, 0, 96);
+      const y = clamp(start.y + deltaYPct, 0, 96);
+      updateStatement(drag.index, { ...start, x, y });
     }
   }
 
@@ -120,43 +104,60 @@ export default function HighlightEditor({
     window.removeEventListener("mouseup", handlePointerUp);
   }
 
-  const cardY = hasBox ? Math.min(highlight.y + highlight.height + 2, 88) : 0;
+  function updateHighlight(index, box) {
+    const next = highlights.slice();
+    next[index] = box;
+    onChangeHighlights(next);
+  }
+
+  function updateStatement(index, note) {
+    const next = statements.slice();
+    next[index] = note;
+    onChangeStatements(next);
+  }
+
+  const nothingToShow =
+    (showHighlights || showStatements) && highlights.length === 0 && statements.length === 0;
 
   return (
     <div className="editor-stage" ref={stageRef}>
       <div
         className="editor-frame"
         style={renderedSize ? { width: renderedSize.width, height: renderedSize.height } : undefined}
-        onMouseDown={handleStageMouseDown}
       >
         <img ref={imgRef} src={screenshotUrl} alt="Slide preview" className="editor-image" onLoad={measure} />
 
-        {showHighlight && !hasBox && (
-          <div className="editor-hint">Click and drag on the image to draw a highlight</div>
-        )}
+        {showHighlights &&
+          highlights.map((h, i) => (
+            <div
+              key={`h-${i}`}
+              className="editor-highlight"
+              style={{ left: `${h.x}%`, top: `${h.y}%`, width: `${h.width}%`, height: `${h.height}%` }}
+              onMouseDown={(e) => startDrag(e, "highlight", i, "move")}
+            >
+              <span className="editor-badge">{i + 1}</span>
+              <div
+                className="editor-resize-handle"
+                onMouseDown={(e) => startDrag(e, "highlight", i, "resize")}
+              />
+            </div>
+          ))}
 
-        {showHighlight && hasBox && (
-          <div
-            className="editor-highlight"
-            style={{
-              left: `${highlight.x}%`,
-              top: `${highlight.y}%`,
-              width: `${highlight.width}%`,
-              height: `${highlight.height}%`,
-            }}
-            onMouseDown={(e) => handlePointerDown(e, "move")}
-          >
-            <div className="editor-resize-handle" onMouseDown={(e) => handlePointerDown(e, "resize")} />
-          </div>
-        )}
+        {showStatements &&
+          statements.map((s, i) => (
+            <div
+              key={`s-${i}`}
+              className="editor-statement"
+              style={{ left: `${s.x}%`, top: `${s.y}%` }}
+              onMouseDown={(e) => startDrag(e, "statement", i, "move")}
+            >
+              <span className="editor-badge editor-badge--statement">{i + 1}</span>
+              {s.text ? s.text : <em>Type this statement's text below</em>}
+            </div>
+          ))}
 
-        {showInstruction && hasBox && instructionText && (
-          <div
-            className="editor-instruction-preview"
-            style={{ left: `${highlight.x}%`, top: `${cardY}%` }}
-          >
-            {instructionText}
-          </div>
+        {nothingToShow && (
+          <div className="editor-hint">Use the + buttons below to add a highlighter or statement box</div>
         )}
       </div>
     </div>

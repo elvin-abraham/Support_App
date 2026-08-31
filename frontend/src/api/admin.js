@@ -30,8 +30,8 @@ export async function createProduct(name, slug) {
   return res.json();
 }
 
-// steps: [{ stepNumber, screenshotUrl, highlightX, highlightY, highlightWidth,
-//           highlightHeight, instructionText, isFinalStep }]
+// steps: [{ stepNumber, screenshotUrl, highlights: [{x,y,width,height}],
+//           statements: [{x,y,text}], finalMessage, isFinalStep }]
 export async function createTutorial(productSlug, { title, slug, description, steps }) {
   const res = await fetch(`${BASE_URL}/products/${productSlug}/tutorials`, {
     method: "POST",
@@ -41,6 +41,23 @@ export async function createTutorial(productSlug, { title, slug, description, st
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error || "Failed to publish tutorial");
+  }
+  return res.json();
+}
+
+export async function fetchAllTutorials() {
+  const res = await fetch(`${BASE_URL}/tutorials`);
+  if (!res.ok) throw new Error("Failed to fetch tutorials");
+  return res.json();
+}
+
+export async function deleteTutorial(productSlug, tutorialSlug) {
+  const res = await fetch(`${BASE_URL}/products/${productSlug}/tutorials/${tutorialSlug}`, {
+    method: "DELETE",
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || "Failed to delete tutorial");
   }
   return res.json();
 }

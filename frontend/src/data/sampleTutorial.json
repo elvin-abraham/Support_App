@@ -5,51 +5,41 @@
     {
       "stepNumber": 1,
       "screenshotUrl": "/screenshots/login-page.png",
-      "highlightX": 30,
-      "highlightY": 28,
-      "highlightWidth": 40,
-      "highlightHeight": 8,
-      "instructionText": "Enter your username here.",
+      "highlights": [{ "x": 30, "y": 28, "width": 40, "height": 8 }],
+      "statements": [{ "x": 30, "y": 38, "text": "Enter your username here." }],
+      "finalMessage": "",
       "isFinalStep": false
     },
     {
       "stepNumber": 2,
       "screenshotUrl": "/screenshots/login-page.png",
-      "highlightX": 30,
-      "highlightY": 42,
-      "highlightWidth": 40,
-      "highlightHeight": 8,
-      "instructionText": "Enter your password here.",
+      "highlights": [{ "x": 30, "y": 42, "width": 40, "height": 8 }],
+      "statements": [{ "x": 30, "y": 52, "text": "Enter your password here." }],
+      "finalMessage": "",
       "isFinalStep": false
     },
     {
       "stepNumber": 3,
       "screenshotUrl": "/screenshots/login-page.png",
-      "highlightX": 30,
-      "highlightY": 56,
-      "highlightWidth": 40,
-      "highlightHeight": 8,
-      "instructionText": "Enter the OTP received on your mobile number or email address.",
+      "highlights": [{ "x": 30, "y": 56, "width": 40, "height": 8 }],
+      "statements": [{ "x": 30, "y": 66, "text": "Enter the OTP received on your mobile number or email address." }],
+      "finalMessage": "",
       "isFinalStep": false
     },
     {
       "stepNumber": 4,
       "screenshotUrl": "/screenshots/login-page.png",
-      "highlightX": 30,
-      "highlightY": 70,
-      "highlightWidth": 40,
-      "highlightHeight": 10,
-      "instructionText": "Click this button to log in.",
+      "highlights": [{ "x": 30, "y": 70, "width": 40, "height": 10 }],
+      "statements": [{ "x": 30, "y": 82, "text": "Click this button to log in." }],
+      "finalMessage": "",
       "isFinalStep": false
     },
     {
       "stepNumber": 5,
       "screenshotUrl": "/screenshots/logged-in-page.png",
-      "highlightX": 0,
-      "highlightY": 0,
-      "highlightWidth": 0,
-      "highlightHeight": 0,
-      "instructionText": "You are now logged in. This is what your dashboard should look like.",
+      "highlights": [],
+      "statements": [],
+      "finalMessage": "You are now logged in. This is what your dashboard should look like.",
       "isFinalStep": true
     }
   ]

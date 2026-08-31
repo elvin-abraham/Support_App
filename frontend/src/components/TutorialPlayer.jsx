@@ -3,25 +3,18 @@ import HighlightBox from "./HighlightBox.jsx";
 import InstructionCard from "./InstructionCard.jsx";
 
 // Generic tutorial player. It knows nothing about "login" specifically —
-// it just walks through whatever `steps` array it's given. This is what
-// makes adding a new tutorial ("How to generate an invoice", etc.) a
-// content change, not a new component.
+// it just walks through whatever `steps` array it's given.
 export default function TutorialPlayer({ tutorial, onExit }) {
   const [stepIndex, setStepIndex] = useState(0);
   const steps = tutorial.steps || [];
   const step = steps[stepIndex];
   const isLastStep = stepIndex === steps.length - 1;
 
-  // MySQL DECIMAL columns come back as strings (e.g. "28.00"), not
-  // numbers. Coerce once here so every arithmetic use below is safe.
-  const highlightX = Number(step?.highlightX) || 0;
-  const highlightY = Number(step?.highlightY) || 0;
-  const highlightWidth = Number(step?.highlightWidth) || 0;
-  const highlightHeight = Number(step?.highlightHeight) || 0;
+  // Each step can have any number of independent highlights and
+  // statement boxes now, not just one of each.
+  const highlights = Array.isArray(step?.highlights) ? step.highlights : [];
+  const statements = Array.isArray(step?.statements) ? step.statements : [];
 
-  // "stage" is the space left over between the top bar and bottom bar.
-  // "frame" is sized in JS to exactly match the image's own aspect
-  // ratio, scaled up as large as the stage allows.
   const stageRef = useRef(null);
   const imgRef = useRef(null);
   const [renderedSize, setRenderedSize] = useState(null);
@@ -67,8 +60,6 @@ export default function TutorialPlayer({ tutorial, onExit }) {
     if (stepIndex > 0) setStepIndex((i) => i - 1);
   }
 
-  const cardY = Math.min(highlightY + highlightHeight + 2, 88);
-
   return (
     <div className="tutorial-player">
       <div className="top-bar">
@@ -92,9 +83,6 @@ export default function TutorialPlayer({ tutorial, onExit }) {
           )}
         </div>
 
-        {/* The trail: each waypoint is a step, connected in sequence —
-            a more literal "you are here on the path" indicator than a
-            plain progress bar. */}
         <ol className="trail" aria-label={`Step ${stepIndex + 1} of ${steps.length}`}>
           {steps.map((s, i) => {
             const state = i < stepIndex ? "done" : i === stepIndex ? "current" : "upcoming";
@@ -120,22 +108,27 @@ export default function TutorialPlayer({ tutorial, onExit }) {
             className="screenshot"
             onLoad={measure}
           />
-          <HighlightBox
-            x={highlightX}
-            y={highlightY}
-            width={highlightWidth}
-            height={highlightHeight}
-          />
-          {highlightWidth > 0 && (
-            <InstructionCard x={highlightX} y={cardY} text={step.instructionText} />
-          )}
+
+          {highlights.map((h, i) => (
+            <HighlightBox
+              key={`highlight-${i}`}
+              x={Number(h.x) || 0}
+              y={Number(h.y) || 0}
+              width={Number(h.width) || 0}
+              height={Number(h.height) || 0}
+            />
+          ))}
+
+          {statements.map((s, i) => (
+            <InstructionCard key={`statement-${i}`} x={Number(s.x) || 0} y={Number(s.y) || 0} text={s.text} />
+          ))}
         </div>
       </div>
 
       <div className="bottom-bar">
         {Boolean(step.isFinalStep) && (
           <div className="final-note">
-            <p>{step.instructionText}</p>
+            <p>{step.finalMessage}</p>
           </div>
         )}
         <div className="tutorial-controls">

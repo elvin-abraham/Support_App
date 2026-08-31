@@ -4,6 +4,9 @@ import { uploadImage, createProduct, createTutorial, slugify } from "../api/admi
 import HighlightEditor from "./HighlightEditor.jsx";
 import TutorialPlayer from "../components/TutorialPlayer.jsx";
 
+const DEFAULT_HIGHLIGHT = { x: 40, y: 40, width: 20, height: 12 };
+const DEFAULT_STATEMENT = { x: 40, y: 60, text: "" };
+
 let nextLocalId = 1;
 function makeEmptyStep() {
   return {
@@ -11,11 +14,12 @@ function makeEmptyStep() {
     screenshotUrl: "",
     uploading: false,
     uploadError: "",
-    showHighlight: false,
-    highlight: null, // { x, y, width, height }
-    showInstruction: false,
-    instructionText: "",
+    showHighlights: false,
+    highlights: [], // [{ x, y, width, height }]
+    showStatements: false,
+    statements: [], // [{ x, y, text }]
     isFinalStep: false,
+    finalMessageText: "",
   };
 }
 
@@ -50,6 +54,44 @@ export default function TutorialBuilder() {
     setSteps((prev) => (prev.length > 1 ? prev.filter((s) => s.localId !== localId) : prev));
   }
 
+  // --- Highlighter +/- ---
+  function addHighlight(localId) {
+    setSteps((prev) =>
+      prev.map((s) =>
+        s.localId === localId ? { ...s, highlights: [...s.highlights, { ...DEFAULT_HIGHLIGHT }] } : s
+      )
+    );
+  }
+  function removeHighlight(localId) {
+    setSteps((prev) =>
+      prev.map((s) => (s.localId === localId ? { ...s, highlights: s.highlights.slice(0, -1) } : s))
+    );
+  }
+
+  // --- Statement box +/- ---
+  function addStatement(localId) {
+    setSteps((prev) =>
+      prev.map((s) =>
+        s.localId === localId ? { ...s, statements: [...s.statements, { ...DEFAULT_STATEMENT }] } : s
+      )
+    );
+  }
+  function removeStatement(localId) {
+    setSteps((prev) =>
+      prev.map((s) => (s.localId === localId ? { ...s, statements: s.statements.slice(0, -1) } : s))
+    );
+  }
+  function updateStatementText(localId, index, text) {
+    setSteps((prev) =>
+      prev.map((s) => {
+        if (s.localId !== localId) return s;
+        const next = s.statements.slice();
+        next[index] = { ...next[index], text };
+        return { ...s, statements: next };
+      })
+    );
+  }
+
   async function handleFileChange(localId, file) {
     if (!file) return;
     updateStep(localId, { uploading: true, uploadError: "" });
@@ -81,11 +123,9 @@ export default function TutorialBuilder() {
       steps: steps.map((s, i) => ({
         stepNumber: i + 1,
         screenshotUrl: s.screenshotUrl,
-        highlightX: s.showHighlight && s.highlight ? s.highlight.x : 0,
-        highlightY: s.showHighlight && s.highlight ? s.highlight.y : 0,
-        highlightWidth: s.showHighlight && s.highlight ? s.highlight.width : 0,
-        highlightHeight: s.showHighlight && s.highlight ? s.highlight.height : 0,
-        instructionText: s.showInstruction || s.isFinalStep ? s.instructionText : "",
+        highlights: s.showHighlights ? s.highlights : [],
+        statements: s.showStatements ? s.statements : [],
+        finalMessage: s.isFinalStep ? s.finalMessageText : "",
         isFinalStep: s.isFinalStep,
       })),
     };
@@ -237,11 +277,12 @@ export default function TutorialBuilder() {
                 <>
                   <HighlightEditor
                     screenshotUrl={step.screenshotUrl}
-                    highlight={step.highlight}
-                    onChangeHighlight={(h) => updateStep(step.localId, { highlight: h })}
-                    showHighlight={step.showHighlight && !step.isFinalStep}
-                    instructionText={step.instructionText}
-                    showInstruction={step.showInstruction && !step.isFinalStep}
+                    highlights={step.highlights}
+                    onChangeHighlights={(next) => updateStep(step.localId, { highlights: next })}
+                    showHighlights={step.showHighlights}
+                    statements={step.statements}
+                    onChangeStatements={(next) => updateStep(step.localId, { statements: next })}
+                    showStatements={step.showStatements}
                   />
                   <label className="upload-replace">
                     <input
@@ -261,51 +302,105 @@ export default function TutorialBuilder() {
                   <input
                     type="checkbox"
                     checked={step.isFinalStep}
-                    onChange={(e) =>
-                      updateStep(step.localId, {
-                        isFinalStep: e.target.checked,
-                        showHighlight: e.target.checked ? false : step.showHighlight,
-                      })
-                    }
+                    onChange={(e) => updateStep(step.localId, { isFinalStep: e.target.checked })}
                   />
                   This is the final "you're done" step
                 </label>
 
                 {!step.isFinalStep && (
                   <>
-                    <label className="checkbox-row">
-                      <input
-                        type="checkbox"
-                        checked={step.showHighlight}
-                        onChange={(e) =>
-                          updateStep(step.localId, {
-                            showHighlight: e.target.checked,
-                            highlight: e.target.checked ? step.highlight : null,
-                          })
-                        }
-                      />
-                      Add a highlighter
-                    </label>
-                    <label className="checkbox-row">
-                      <input
-                        type="checkbox"
-                        checked={step.showInstruction}
-                        onChange={(e) => updateStep(step.localId, { showInstruction: e.target.checked })}
-                      />
-                      Add a statement box
-                    </label>
+                    <div className="toggle-with-stepper">
+                      <label className="checkbox-row">
+                        <input
+                          type="checkbox"
+                          checked={step.showHighlights}
+                          onChange={(e) => updateStep(step.localId, { showHighlights: e.target.checked })}
+                        />
+                        Add a highlighter
+                      </label>
+                      {step.showHighlights && (
+                        <span className="stepper">
+                          <button
+                            type="button"
+                            className="btn-stepper"
+                            onClick={() => addHighlight(step.localId)}
+                            aria-label="Add highlighter"
+                          >
+                            +
+                          </button>
+                          <span className="stepper-count">{step.highlights.length}</span>
+                          <button
+                            type="button"
+                            className="btn-stepper"
+                            onClick={() => removeHighlight(step.localId)}
+                            disabled={step.highlights.length === 0}
+                            aria-label="Remove last highlighter"
+                          >
+                            −
+                          </button>
+                        </span>
+                      )}
+                    </div>
+
+                    <div className="toggle-with-stepper">
+                      <label className="checkbox-row">
+                        <input
+                          type="checkbox"
+                          checked={step.showStatements}
+                          onChange={(e) => updateStep(step.localId, { showStatements: e.target.checked })}
+                        />
+                        Add a statement box
+                      </label>
+                      {step.showStatements && (
+                        <span className="stepper">
+                          <button
+                            type="button"
+                            className="btn-stepper"
+                            onClick={() => addStatement(step.localId)}
+                            aria-label="Add statement box"
+                          >
+                            +
+                          </button>
+                          <span className="stepper-count">{step.statements.length}</span>
+                          <button
+                            type="button"
+                            className="btn-stepper"
+                            onClick={() => removeStatement(step.localId)}
+                            disabled={step.statements.length === 0}
+                            aria-label="Remove last statement box"
+                          >
+                            −
+                          </button>
+                        </span>
+                      )}
+                    </div>
                   </>
                 )}
               </div>
 
-              {(step.showInstruction || step.isFinalStep) && (
+              {step.showStatements && step.statements.length > 0 && (
+                <div className="statement-text-list">
+                  {step.statements.map((st, i) => (
+                    <div key={i} className="statement-text-row">
+                      <span className="statement-text-label">Statement {i + 1}</span>
+                      <textarea
+                        className="instruction-input"
+                        placeholder="e.g. Enter your username here."
+                        value={st.text}
+                        onChange={(e) => updateStatementText(step.localId, i, e.target.value)}
+                        rows={2}
+                      />
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {step.isFinalStep && (
                 <textarea
                   className="instruction-input"
-                  placeholder={
-                    step.isFinalStep ? "e.g. You're now logged in." : "e.g. Enter your username here."
-                  }
-                  value={step.instructionText}
-                  onChange={(e) => updateStep(step.localId, { instructionText: e.target.value })}
+                  placeholder="e.g. You're now logged in."
+                  value={step.finalMessageText}
+                  onChange={(e) => updateStep(step.localId, { finalMessageText: e.target.value })}
                   rows={2}
                 />
               )}

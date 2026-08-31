@@ -21,20 +21,26 @@ CREATE TABLE IF NOT EXISTS tutorials (
   UNIQUE KEY uniq_product_tutorial (product_id, slug)
 );
 
--- One step within a tutorial: a screenshot + a highlighted area + instructions.
--- Highlight coordinates are stored as PERCENTAGES (0-100) of the screenshot's
--- width/height, not pixels, so the overlay stays correctly positioned
--- regardless of how large the screenshot is rendered on screen.
+-- One step within a tutorial: a screenshot, plus zero or more highlights
+-- and zero or more statement boxes on it (stored as JSON arrays since
+-- there can be any number of each, independently positioned), plus an
+-- optional final "you're done" success message.
+--
+-- highlight_x/y/width/height are legacy columns from the single-highlight
+-- version of this app and are no longer read or written to — kept only
+-- so existing rows aren't broken. All new data lives in the JSON columns.
 CREATE TABLE IF NOT EXISTS tutorial_steps (
   id INT AUTO_INCREMENT PRIMARY KEY,
   tutorial_id INT NOT NULL,
   step_number INT NOT NULL,
   screenshot_url VARCHAR(500) NOT NULL,
-  highlight_x DECIMAL(5,2) NOT NULL,      -- left,   % of image width
-  highlight_y DECIMAL(5,2) NOT NULL,      -- top,    % of image height
-  highlight_width DECIMAL(5,2) NOT NULL,  -- width,  % of image width
-  highlight_height DECIMAL(5,2) NOT NULL, -- height, % of image height
-  instruction_text VARCHAR(500) NOT NULL,
+  highlight_x DECIMAL(5,2) NOT NULL DEFAULT 0,
+  highlight_y DECIMAL(5,2) NOT NULL DEFAULT 0,
+  highlight_width DECIMAL(5,2) NOT NULL DEFAULT 0,
+  highlight_height DECIMAL(5,2) NOT NULL DEFAULT 0,
+  highlights JSON NULL,   -- array of { x, y, width, height }, all percentages
+  statements JSON NULL,   -- array of { x, y, text }, x/y are percentages
+  instruction_text VARCHAR(500) NOT NULL, -- the final "you're done" message text
   is_final_step BOOLEAN DEFAULT FALSE,
   FOREIGN KEY (tutorial_id) REFERENCES tutorials(id) ON DELETE CASCADE,
   UNIQUE KEY uniq_tutorial_step (tutorial_id, step_number)
