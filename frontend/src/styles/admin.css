@@ -1,0 +1,345 @@
+/* Reuses the color/type tokens defined in styles/index.css (:root is
+   global to the document, so --brand, --ink, --font-display, etc. are
+   already available here). */
+
+.admin-page {
+  min-height: 100vh;
+  background: var(--paper);
+  padding: 32px 20px 80px;
+}
+
+.admin-shell {
+  max-width: 720px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.admin-shell--preview {
+  max-width: 900px;
+  height: calc(100vh - 64px);
+}
+
+.admin-header h1 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 26px;
+  margin: 0 0 6px;
+  color: var(--ink);
+}
+
+.admin-header p {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 14px;
+}
+
+.admin-card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 1px 2px rgba(18, 35, 42, 0.04);
+}
+
+.admin-card h3 {
+  margin: 0 0 12px;
+  font-size: 14px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--brand);
+}
+
+.admin-card input[type="text"],
+.admin-card select {
+  width: 100%;
+  padding: 11px 14px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  font-size: 15px;
+  font-family: var(--font-body);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.admin-card input[type="text"]:focus,
+.admin-card select:focus {
+  border-color: var(--brand);
+}
+
+.admin-row {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.admin-row select,
+.admin-row input {
+  flex: 1;
+}
+
+.admin-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.admin-hint {
+  font-size: 13px;
+  color: var(--ink-soft);
+  margin: 0;
+}
+
+.admin-error {
+  color: var(--spotlight-dark);
+  background: #fdece5;
+  border: 1px solid #f4c9b6;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 13.5px;
+  margin: 0 0 4px;
+}
+
+.admin-success h2 {
+  font-family: var(--font-display);
+  font-size: 22px;
+  margin: 0 0 8px;
+  color: var(--brand-dark);
+}
+
+.admin-success p {
+  color: var(--ink-soft);
+  margin: 0 0 18px;
+}
+
+/* --- Slides --- */
+
+.slide-list {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.slide-card {
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 16px;
+  background: var(--paper);
+}
+
+.slide-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.slide-number {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.upload-dropzone {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 160px;
+  border: 1.5px dashed var(--line);
+  border-radius: 10px;
+  background: var(--surface);
+  color: var(--ink-soft);
+  font-size: 14px;
+  cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.upload-dropzone:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+.upload-replace {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 13px;
+  color: var(--brand);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+.slide-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 13.5px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.checkbox-row input {
+  accent-color: var(--brand);
+  width: 15px;
+  height: 15px;
+}
+
+.instruction-input {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  font-family: var(--font-body);
+  font-size: 14px;
+  resize: vertical;
+  background: var(--surface);
+  color: var(--ink);
+}
+
+.btn-add-slide {
+  margin-top: 16px;
+  width: 100%;
+  padding: 12px;
+  border-radius: 9px;
+  border: 1.5px dashed var(--line);
+  background: transparent;
+  color: var(--brand);
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.btn-add-slide:hover {
+  border-color: var(--brand);
+  background: var(--brand-soft);
+}
+
+.btn-ghost-outline {
+  padding: 10px 16px;
+  border-radius: 9px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.btn-ghost-outline:hover {
+  border-color: var(--brand);
+  color: var(--brand);
+}
+
+/* --- Preview mode --- */
+
+.preview-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-shrink: 0;
+  padding-bottom: 12px;
+}
+
+.preview-toolbar h2 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 20px;
+  margin: 0;
+  color: var(--ink);
+}
+
+.preview-toolbar-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.preview-stage {
+  flex: 1;
+  min-height: 0;
+}
+
+/* --- Highlight editor (used inline within each slide card) --- */
+
+.editor-stage {
+  position: relative;
+  width: 100%;
+  height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--surface);
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  overflow: hidden;
+}
+
+.editor-frame {
+  position: relative;
+  line-height: 0;
+  cursor: crosshair;
+}
+
+.editor-image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.editor-hint {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 12px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  background: rgba(241, 245, 244, 0.55);
+  pointer-events: none;
+}
+
+.editor-highlight {
+  position: absolute;
+  border: 2.5px solid var(--spotlight);
+  background: rgba(226, 98, 45, 0.12);
+  border-radius: 4px;
+  cursor: move;
+}
+
+.editor-resize-handle {
+  position: absolute;
+  right: -6px;
+  bottom: -6px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: var(--spotlight);
+  border: 2px solid #fff;
+  cursor: nwse-resize;
+}
+
+.editor-instruction-preview {
+  position: absolute;
+  max-width: 200px;
+  background: var(--ink);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 7px;
+  font-size: 12px;
+  pointer-events: none;
+}

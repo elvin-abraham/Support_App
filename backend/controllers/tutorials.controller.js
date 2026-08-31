@@ -1,5 +1,19 @@
 import pool from "../config/db.js";
 
+// POST /api/uploads
+// Accepts one or more files under the "images" field (from the admin
+// panel's image picker) and returns the public URL for each, in the
+// same order they were uploaded — the admin UI relies on that order to
+// know which URL belongs to which slide.
+export async function uploadImages(req, res) {
+  const files = req.files || [];
+  if (files.length === 0) {
+    return res.status(400).json({ error: "No images were uploaded" });
+  }
+  const urls = files.map((file) => `/uploads/${file.filename}`);
+  res.status(201).json({ urls });
+}
+
 // GET /api/products
 export async function listProducts(req, res) {
   try {

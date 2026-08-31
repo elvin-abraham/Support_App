@@ -47,6 +47,12 @@ export default function App() {
           <ProductSelector onSelectTutorial={handleSelectTutorial} />
         )}
       </main>
+
+      {!activeTutorial && (
+        <footer className="app-footer">
+          <a href="/admin">Manage tutorials</a>
+        </footer>
+      )}
     </div>
   );
 }

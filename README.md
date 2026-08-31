@@ -62,13 +62,37 @@ The frontend works two ways:
    the tutorial player standalone (useful for design review before the
    backend/database exist).
 
+## Admin panel
+
+Visit **`/admin`** (e.g. `http://localhost:5173/admin`) to create tutorials
+without touching code or the database directly:
+
+1. Pick an existing product or add a new one.
+2. Type the question (e.g. "How to add a ledger?").
+3. Upload one image per slide, using "+ Add another slide" for more.
+4. Per slide, independently toggle a highlighter (click-and-drag on the
+   image to draw it, drag to move, use the corner handle to resize) and/or
+   a statement box, and type its text. Mark the last slide as the "final"
+   step for the completion message instead.
+5. **Preview tutorial** renders it in the real, live tutorial player.
+6. **Confirm & Publish** creates the product (if new) and tutorial with all
+   its steps in the database in one go — it's live for customers immediately.
+
+Uploaded images are stored in `backend/uploads/` and served at
+`/uploads/<filename>` (proxied through Vite in dev — see `vite.config.js`).
+
 ## Next steps to build out
 
-1. Wire up an admin screen (or even a JSON upload) so support staff can add
-   tutorials without a developer touching code.
-2. Add a `products` list endpoint-driven landing page (currently stubbed).
-3. Decide on screenshot storage (local `/public`, S3, etc.) once you know
-   hosting.
-4. Optional later enhancement: a lightweight browser extension that can
+1. Add authentication in front of `/admin` — right now anyone who knows the
+   URL can publish tutorials. A simple shared password or proper login
+   would be a sensible next step before this goes anywhere public-facing.
+2. Add an "edit existing tutorial" flow (currently admin can only create
+   new ones, not modify or delete published tutorials).
+3. Add a `products` list endpoint-driven landing page (currently stubbed).
+4. Decide on screenshot storage (local `/public`, S3, etc.) once you know
+   hosting — `backend/uploads/` works for a single server but won't
+   survive a redeploy on most hosting platforms without a persistent disk
+   or object storage.
+5. Optional later enhancement: a lightweight browser extension that can
    confirm a step was actually completed in the real app, instead of
    relying on the customer clicking "Next" manually.
