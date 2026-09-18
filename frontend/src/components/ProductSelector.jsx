@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { fetchProducts, fetchTutorialsForProduct } from "../api/tutorials.js";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 // Lets the customer pick "Product" then "Question", mirroring the
 // two-dropdown flow described in the brief. Falls back to a friendly
@@ -9,6 +10,7 @@ export default function ProductSelector({ onSelectTutorial }) {
   const [tutorials, setTutorials] = useState([]);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [loadError, setLoadError] = useState(false);
+  const { t, pick } = useLanguage();
 
   useEffect(() => {
     fetchProducts()
@@ -26,13 +28,9 @@ export default function ProductSelector({ onSelectTutorial }) {
   if (loadError) {
     return (
       <div className="selector-card">
-        <p className="selector-lead">
-          We can't reach the tutorial library right now. Start the backend
-          (<code>npm run dev</code> in <code>backend/</code>), or preview a
-          sample walkthrough below in the meantime.
-        </p>
+        <p className="selector-lead">{t("noBackend")}</p>
         <button className="btn-primary" onClick={() => onSelectTutorial(null)}>
-          Preview a sample tutorial
+          {t("previewSample")}
         </button>
       </div>
     );
@@ -40,10 +38,10 @@ export default function ProductSelector({ onSelectTutorial }) {
 
   return (
     <div className="selector-card">
-      <p className="selector-lead">Pick your product, then the task you need help with.</p>
+      <p className="selector-lead">{t("selectorLead")}</p>
 
       <label>
-        <span className="field-label">Product</span>
+        <span className="field-label">{t("product")}</span>
         <select
           value={selectedProduct?.slug || ""}
           onChange={(e) => {
@@ -52,10 +50,10 @@ export default function ProductSelector({ onSelectTutorial }) {
             setTutorials([]);
           }}
         >
-          <option value="">Select a product…</option>
+          <option value="">{t("selectProduct")}</option>
           {products.map((p) => (
             <option key={p.slug} value={p.slug}>
-              {p.name}
+              {pick(p.name, p.nameHindi)}
             </option>
           ))}
         </select>
@@ -63,7 +61,7 @@ export default function ProductSelector({ onSelectTutorial }) {
 
       {selectedProduct && (
         <label>
-          <span className="field-label">Question</span>
+          <span className="field-label">{t("question")}</span>
           <select
             defaultValue=""
             onChange={(e) => {
@@ -71,10 +69,10 @@ export default function ProductSelector({ onSelectTutorial }) {
               if (tutorial) onSelectTutorial({ productSlug: selectedProduct.slug, tutorialSlug: tutorial.slug });
             }}
           >
-            <option value="">Select a question…</option>
-            {tutorials.map((t) => (
-              <option key={t.slug} value={t.slug}>
-                {t.title}
+            <option value="">{t("selectQuestion")}</option>
+            {tutorials.map((tut) => (
+              <option key={tut.slug} value={tut.slug}>
+                {pick(tut.title, tut.titleHindi)}
               </option>
             ))}
           </select>

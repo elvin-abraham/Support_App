@@ -1,14 +1,9 @@
 const BASE_URL = "/api";
 
-// Uploads one image and returns its public URL (e.g. "/uploads/xyz.png").
 export async function uploadImage(file) {
   const formData = new FormData();
   formData.append("images", file);
-
-  const res = await fetch(`${BASE_URL}/uploads`, {
-    method: "POST",
-    body: formData,
-  });
+  const res = await fetch(`${BASE_URL}/uploads`, { method: "POST", body: formData });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error || "Upload failed");
@@ -17,11 +12,11 @@ export async function uploadImage(file) {
   return urls[0];
 }
 
-export async function createProduct(name, slug) {
+export async function createProduct(name, nameHindi, slug) {
   const res = await fetch(`${BASE_URL}/products`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ name, slug }),
+    body: JSON.stringify({ name, nameHindi, slug }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -31,12 +26,12 @@ export async function createProduct(name, slug) {
 }
 
 // steps: [{ stepNumber, screenshotUrl, highlights: [{x,y,width,height}],
-//           statements: [{x,y,text}], finalMessage, isFinalStep }]
-export async function createTutorial(productSlug, { title, slug, description, steps }) {
+//           statements: [{x,y,text,textHindi}], finalMessage, finalMessageHindi, isFinalStep }]
+export async function createTutorial(productSlug, { title, titleHindi, slug, description, steps }) {
   const res = await fetch(`${BASE_URL}/products/${productSlug}/tutorials`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title, slug, description, steps }),
+    body: JSON.stringify({ title, titleHindi, slug, description, steps }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
@@ -52,9 +47,7 @@ export async function fetchAllTutorials() {
 }
 
 export async function deleteTutorial(productSlug, tutorialSlug) {
-  const res = await fetch(`${BASE_URL}/products/${productSlug}/tutorials/${tutorialSlug}`, {
-    method: "DELETE",
-  });
+  const res = await fetch(`${BASE_URL}/products/${productSlug}/tutorials/${tutorialSlug}`, { method: "DELETE" });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
     throw new Error(body.error || "Failed to delete tutorial");
@@ -62,14 +55,6 @@ export async function deleteTutorial(productSlug, tutorialSlug) {
   return res.json();
 }
 
-// Turns "How to add a ledger?" into "how-to-add-a-ledger", and
-// "Incluziv ERP" into "incluziv-erp" — used for both product and
-// tutorial slugs so the admin never has to think about URL slugs.
 export function slugify(text) {
-  return text
-    .toLowerCase()
-    .trim()
-    .replace(/[^\w\s-]/g, "")
-    .replace(/[\s_-]+/g, "-")
-    .replace(/^-+|-+$/g, "");
+  return text.toLowerCase().trim().replace(/[^\w\s-]/g, "").replace(/[\s_-]+/g, "-").replace(/^-+|-+$/g, "");
 }

@@ -2,45 +2,8 @@
   "title": "How to Login",
   "productName": "Incluziv Cloud",
   "steps": [
-    {
-      "stepNumber": 1,
-      "screenshotUrl": "/screenshots/login-page.png",
-      "highlights": [{ "x": 30, "y": 28, "width": 40, "height": 8 }],
-      "statements": [{ "x": 30, "y": 38, "text": "Enter your username here." }],
-      "finalMessage": "",
-      "isFinalStep": false
-    },
-    {
-      "stepNumber": 2,
-      "screenshotUrl": "/screenshots/login-page.png",
-      "highlights": [{ "x": 30, "y": 42, "width": 40, "height": 8 }],
-      "statements": [{ "x": 30, "y": 52, "text": "Enter your password here." }],
-      "finalMessage": "",
-      "isFinalStep": false
-    },
-    {
-      "stepNumber": 3,
-      "screenshotUrl": "/screenshots/login-page.png",
-      "highlights": [{ "x": 30, "y": 56, "width": 40, "height": 8 }],
-      "statements": [{ "x": 30, "y": 66, "text": "Enter the OTP received on your mobile number or email address." }],
-      "finalMessage": "",
-      "isFinalStep": false
-    },
-    {
-      "stepNumber": 4,
-      "screenshotUrl": "/screenshots/login-page.png",
-      "highlights": [{ "x": 30, "y": 70, "width": 40, "height": 10 }],
-      "statements": [{ "x": 30, "y": 82, "text": "Click this button to log in." }],
-      "finalMessage": "",
-      "isFinalStep": false
-    },
-    {
-      "stepNumber": 5,
-      "screenshotUrl": "/screenshots/logged-in-page.png",
-      "highlights": [],
-      "statements": [],
-      "finalMessage": "You are now logged in. This is what your dashboard should look like.",
-      "isFinalStep": true
-    }
+    { "stepNumber": 1, "screenshotUrl": "/screenshots/login-page.png", "highlights": [{ "x": 30, "y": 28, "width": 40, "height": 8 }], "statements": [{ "x": 30, "y": 38, "text": "Enter your username here." }], "finalMessage": "", "isFinalStep": false },
+    { "stepNumber": 2, "screenshotUrl": "/screenshots/login-page.png", "highlights": [{ "x": 30, "y": 42, "width": 40, "height": 8 }], "statements": [{ "x": 30, "y": 52, "text": "Enter your password here." }], "finalMessage": "", "isFinalStep": false },
+    { "stepNumber": 3, "screenshotUrl": "/screenshots/logged-in-page.png", "highlights": [], "statements": [], "finalMessage": "You are now logged in.", "isFinalStep": true }
   ]
 }

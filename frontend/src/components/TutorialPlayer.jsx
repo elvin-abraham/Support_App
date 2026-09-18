@@ -1,11 +1,14 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import HighlightBox from "./HighlightBox.jsx";
 import InstructionCard from "./InstructionCard.jsx";
+import LanguageToggle from "./LanguageToggle.jsx";
+import { useLanguage } from "../i18n/LanguageContext.jsx";
 
 // Generic tutorial player. It knows nothing about "login" specifically —
 // it just walks through whatever `steps` array it's given.
 export default function TutorialPlayer({ tutorial, onExit }) {
   const [stepIndex, setStepIndex] = useState(0);
+  const { t, pick } = useLanguage();
   const steps = tutorial.steps || [];
   const step = steps[stepIndex];
   const isLastStep = stepIndex === steps.length - 1;
@@ -65,25 +68,31 @@ export default function TutorialPlayer({ tutorial, onExit }) {
       <div className="top-bar">
         <div className="tutorial-header">
           <div>
-            <p className="eyebrow">{tutorial.productName}</p>
-            <h2>{tutorial.title}</h2>
+            <p className="eyebrow">{pick(tutorial.productName, tutorial.productNameHindi)}</p>
+            <h2>{pick(tutorial.title, tutorial.titleHindi)}</h2>
           </div>
-          {onExit && (
-            <button className="btn-ghost" onClick={onExit}>
-              <span>Exit</span>
-              <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
-                <path
-                  d="M4 4l8 8M12 4l-8 8"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                />
-              </svg>
-            </button>
-          )}
+          <div className="tutorial-header-actions">
+            <LanguageToggle />
+            {onExit && (
+              <button className="btn-ghost" onClick={onExit}>
+                <span>{t("exit")}</span>
+                <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true">
+                  <path
+                    d="M4 4l8 8M12 4l-8 8"
+                    stroke="currentColor"
+                    strokeWidth="1.6"
+                    strokeLinecap="round"
+                  />
+                </svg>
+              </button>
+            )}
+          </div>
         </div>
 
-        <ol className="trail" aria-label={`Step ${stepIndex + 1} of ${steps.length}`}>
+        {/* The trail: each waypoint is a step, connected in sequence —
+            a more literal "you are here on the path" indicator than a
+            plain progress bar. */}
+        <ol className="trail" aria-label={t("stepOf", stepIndex + 1, steps.length)}>
           {steps.map((s, i) => {
             const state = i < stepIndex ? "done" : i === stepIndex ? "current" : "upcoming";
             return (
@@ -120,7 +129,12 @@ export default function TutorialPlayer({ tutorial, onExit }) {
           ))}
 
           {statements.map((s, i) => (
-            <InstructionCard key={`statement-${i}`} x={Number(s.x) || 0} y={Number(s.y) || 0} text={s.text} />
+            <InstructionCard
+              key={`statement-${i}`}
+              x={Number(s.x) || 0}
+              y={Number(s.y) || 0}
+              text={pick(s.text, s.textHindi)}
+            />
           ))}
         </div>
       </div>
@@ -128,23 +142,21 @@ export default function TutorialPlayer({ tutorial, onExit }) {
       <div className="bottom-bar">
         {Boolean(step.isFinalStep) && (
           <div className="final-note">
-            <p>{step.finalMessage}</p>
+            <p>{pick(step.finalMessage, step.finalMessageHindi)}</p>
           </div>
         )}
         <div className="tutorial-controls">
           <button className="btn-secondary" onClick={goBack} disabled={stepIndex === 0}>
-            Back
+            {t("back")}
           </button>
-          <span className="step-count">
-            Step {stepIndex + 1} of {steps.length}
-          </span>
+          <span className="step-count">{t("stepOf", stepIndex + 1, steps.length)}</span>
           {isLastStep ? (
             <button className="btn-primary" onClick={onExit}>
-              Done
+              {t("done")}
             </button>
           ) : (
             <button className="btn-primary" onClick={goNext}>
-              Next
+              {t("next")}
             </button>
           )}
         </div>

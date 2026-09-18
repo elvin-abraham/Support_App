@@ -10,12 +10,8 @@ export default function ManageTutorials() {
 
   function load() {
     setLoading(true);
-    fetchAllTutorials()
-      .then(setTutorials)
-      .catch((err) => setError(err.message))
-      .finally(() => setLoading(false));
+    fetchAllTutorials().then(setTutorials).catch((err) => setError(err.message)).finally(() => setLoading(false));
   }
-
   useEffect(load, []);
 
   async function confirmDelete(tutorial) {
@@ -42,16 +38,11 @@ export default function ManageTutorials() {
         <h1>Manage tutorials</h1>
         <p>Everything published so far. Deleting a tutorial removes it for customers immediately.</p>
       </header>
-
       {error && <p className="admin-error">{error}</p>}
       {loading && <p className="admin-hint">Loading…</p>}
-
       {!loading && tutorials.length === 0 && !error && (
-        <div className="admin-card">
-          <p className="admin-hint">No tutorials published yet.</p>
-        </div>
+        <div className="admin-card"><p className="admin-hint">No tutorials published yet.</p></div>
       )}
-
       {Object.entries(byProduct).map(([productName, group]) => (
         <div key={productName} className="admin-card">
           <h3>{productName}</h3>
@@ -59,25 +50,16 @@ export default function ManageTutorials() {
             {group.map((t) => (
               <li key={t.id} className="tutorial-row">
                 <span>{t.title}</span>
-
                 {pendingDeleteSlug === t.slug ? (
                   <span className="confirm-row">
                     <span className="confirm-text">Delete this tutorial?</span>
-                    <button
-                      className="btn-danger"
-                      onClick={() => confirmDelete(t)}
-                      disabled={deletingSlug === t.slug}
-                    >
+                    <button className="btn-danger" onClick={() => confirmDelete(t)} disabled={deletingSlug === t.slug}>
                       {deletingSlug === t.slug ? "Deleting…" : "Yes, delete"}
                     </button>
-                    <button className="btn-ghost-outline" onClick={() => setPendingDeleteSlug(null)}>
-                      Cancel
-                    </button>
+                    <button className="btn-ghost-outline" onClick={() => setPendingDeleteSlug(null)}>Cancel</button>
                   </span>
                 ) : (
-                  <button className="btn-danger-outline" onClick={() => setPendingDeleteSlug(t.slug)}>
-                    Delete
-                  </button>
+                  <button className="btn-danger-outline" onClick={() => setPendingDeleteSlug(t.slug)}>Delete</button>
                 )}
               </li>
             ))}

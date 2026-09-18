@@ -3,9 +3,10 @@ import { fetchProducts } from "../api/tutorials.js";
 import { uploadImage, createProduct, createTutorial, slugify } from "../api/admin.js";
 import HighlightEditor from "./HighlightEditor.jsx";
 import TutorialPlayer from "../components/TutorialPlayer.jsx";
+import LanguageToggle from "../components/LanguageToggle.jsx";
 
 const DEFAULT_HIGHLIGHT = { x: 40, y: 40, width: 20, height: 12 };
-const DEFAULT_STATEMENT = { x: 40, y: 60, text: "" };
+const DEFAULT_STATEMENT = { x: 40, y: 60, text: "", textHindi: "" };
 
 let nextLocalId = 1;
 function makeEmptyStep() {
@@ -17,9 +18,10 @@ function makeEmptyStep() {
     showHighlights: false,
     highlights: [], // [{ x, y, width, height }]
     showStatements: false,
-    statements: [], // [{ x, y, text }]
+    statements: [], // [{ x, y, text, textHindi }]
     isFinalStep: false,
     finalMessageText: "",
+    finalMessageTextHindi: "",
   };
 }
 
@@ -28,8 +30,10 @@ export default function TutorialBuilder() {
   const [selectedProductSlug, setSelectedProductSlug] = useState("");
   const [isNewProduct, setIsNewProduct] = useState(false);
   const [newProductName, setNewProductName] = useState("");
+  const [newProductNameHindi, setNewProductNameHindi] = useState("");
 
   const [title, setTitle] = useState("");
+  const [titleHindi, setTitleHindi] = useState("");
   const [steps, setSteps] = useState([makeEmptyStep()]);
 
   const [mode, setMode] = useState("build"); // "build" | "preview" | "published"
@@ -57,9 +61,7 @@ export default function TutorialBuilder() {
   // --- Highlighter +/- ---
   function addHighlight(localId) {
     setSteps((prev) =>
-      prev.map((s) =>
-        s.localId === localId ? { ...s, highlights: [...s.highlights, { ...DEFAULT_HIGHLIGHT }] } : s
-      )
+      prev.map((s) => (s.localId === localId ? { ...s, highlights: [...s.highlights, { ...DEFAULT_HIGHLIGHT }] } : s))
     );
   }
   function removeHighlight(localId) {
@@ -71,9 +73,7 @@ export default function TutorialBuilder() {
   // --- Statement box +/- ---
   function addStatement(localId) {
     setSteps((prev) =>
-      prev.map((s) =>
-        s.localId === localId ? { ...s, statements: [...s.statements, { ...DEFAULT_STATEMENT }] } : s
-      )
+      prev.map((s) => (s.localId === localId ? { ...s, statements: [...s.statements, { ...DEFAULT_STATEMENT }] } : s))
     );
   }
   function removeStatement(localId) {
@@ -81,12 +81,12 @@ export default function TutorialBuilder() {
       prev.map((s) => (s.localId === localId ? { ...s, statements: s.statements.slice(0, -1) } : s))
     );
   }
-  function updateStatementText(localId, index, text) {
+  function updateStatementField(localId, index, field, value) {
     setSteps((prev) =>
       prev.map((s) => {
         if (s.localId !== localId) return s;
         const next = s.statements.slice();
-        next[index] = { ...next[index], text };
+        next[index] = { ...next[index], [field]: value };
         return { ...s, statements: next };
       })
     );
@@ -107,6 +107,9 @@ export default function TutorialBuilder() {
   const productName = isNewProduct
     ? newProductName
     : products.find((p) => p.slug === selectedProductSlug)?.name || "";
+  const productNameHindi = isNewProduct
+    ? newProductNameHindi
+    : products.find((p) => p.slug === selectedProductSlug)?.nameHindi || "";
 
   const readyForPreview =
     productSlug &&
@@ -117,7 +120,9 @@ export default function TutorialBuilder() {
   function buildTutorialPayload() {
     return {
       title: title.trim(),
+      titleHindi: titleHindi.trim(),
       productName,
+      productNameHindi,
       slug: slugify(title),
       description: "",
       steps: steps.map((s, i) => ({
@@ -126,6 +131,7 @@ export default function TutorialBuilder() {
         highlights: s.showHighlights ? s.highlights : [],
         statements: s.showStatements ? s.statements : [],
         finalMessage: s.isFinalStep ? s.finalMessageText : "",
+        finalMessageHindi: s.isFinalStep ? s.finalMessageTextHindi : "",
         isFinalStep: s.isFinalStep,
       })),
     };
@@ -136,7 +142,7 @@ export default function TutorialBuilder() {
     setPublishError("");
     try {
       if (isNewProduct) {
-        await createProduct(newProductName.trim(), productSlug);
+        await createProduct(newProductName.trim(), newProductNameHindi.trim(), productSlug);
       }
       const payload = buildTutorialPayload();
       await createTutorial(productSlug, payload);
@@ -150,10 +156,12 @@ export default function TutorialBuilder() {
 
   function resetForm() {
     setTitle("");
+    setTitleHindi("");
     setSteps([makeEmptyStep()]);
     setIsNewProduct(false);
     setSelectedProductSlug("");
     setNewProductName("");
+    setNewProductNameHindi("");
     setMode("build");
     setPublishError("");
     fetchProducts().then(setProducts).catch(() => {});
@@ -185,6 +193,7 @@ export default function TutorialBuilder() {
             <h2>{title || "Untitled tutorial"}</h2>
           </div>
           <div className="preview-toolbar-actions">
+            <LanguageToggle />
             <button className="btn-secondary" onClick={() => setMode("build")}>
               Back to edit
             </button>
@@ -194,6 +203,7 @@ export default function TutorialBuilder() {
           </div>
         </div>
         {publishError && <p className="admin-error">{publishError}</p>}
+        <p className="admin-hint">Use the language toggle above to check both versions before publishing.</p>
         <div className="preview-stage">
           <TutorialPlayer tutorial={previewTutorial} onExit={() => setMode("build")} />
         </div>
@@ -205,7 +215,7 @@ export default function TutorialBuilder() {
     <div className="admin-shell">
       <header className="admin-header">
         <h1>Create a tutorial</h1>
-        <p>Select a product, describe the question, then walk through each slide.</p>
+        <p>Select a product, describe the question, then walk through each slide. Fields marked English/Hindi are what customers see — fill in both.</p>
       </header>
 
       <div className="admin-card">
@@ -225,28 +235,52 @@ export default function TutorialBuilder() {
             </button>
           </div>
         ) : (
-          <div className="admin-row">
-            <input
-              type="text"
-              placeholder="e.g. Incluziv ERP"
-              value={newProductName}
-              onChange={(e) => setNewProductName(e.target.value)}
-            />
+          <>
+            <div className="bilingual-field">
+              <span className="bilingual-label">Product name (English)</span>
+              <input
+                type="text"
+                placeholder="e.g. Incluziv ERP"
+                value={newProductName}
+                onChange={(e) => setNewProductName(e.target.value)}
+              />
+            </div>
+            <div className="bilingual-field">
+              <span className="bilingual-label">Product name (Hindi) — हिंदी</span>
+              <input
+                type="text"
+                placeholder="जैसे इंक्लूज़िव ईआरपी"
+                value={newProductNameHindi}
+                onChange={(e) => setNewProductNameHindi(e.target.value)}
+              />
+            </div>
             <button className="btn-ghost-outline" onClick={() => setIsNewProduct(false)}>
               Use existing product
             </button>
-          </div>
+          </>
         )}
       </div>
 
       <div className="admin-card">
         <h3>2. Question</h3>
-        <input
-          type="text"
-          placeholder="e.g. How to add a ledger?"
-          value={title}
-          onChange={(e) => setTitle(e.target.value)}
-        />
+        <div className="bilingual-field">
+          <span className="bilingual-label">Question (English)</span>
+          <input
+            type="text"
+            placeholder="e.g. How to add a ledger?"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
+        </div>
+        <div className="bilingual-field">
+          <span className="bilingual-label">Question (Hindi) — हिंदी</span>
+          <input
+            type="text"
+            placeholder="जैसे लेजर कैसे जोड़ें?"
+            value={titleHindi}
+            onChange={(e) => setTitleHindi(e.target.value)}
+          />
+        </div>
       </div>
 
       <div className="admin-card">
@@ -320,21 +354,13 @@ export default function TutorialBuilder() {
                       </label>
                       {step.showHighlights && (
                         <span className="stepper">
-                          <button
-                            type="button"
-                            className="btn-stepper"
-                            onClick={() => addHighlight(step.localId)}
-                            aria-label="Add highlighter"
-                          >
-                            +
-                          </button>
+                          <button type="button" className="btn-stepper" onClick={() => addHighlight(step.localId)}>+</button>
                           <span className="stepper-count">{step.highlights.length}</span>
                           <button
                             type="button"
                             className="btn-stepper"
                             onClick={() => removeHighlight(step.localId)}
                             disabled={step.highlights.length === 0}
-                            aria-label="Remove last highlighter"
                           >
                             −
                           </button>
@@ -353,21 +379,13 @@ export default function TutorialBuilder() {
                       </label>
                       {step.showStatements && (
                         <span className="stepper">
-                          <button
-                            type="button"
-                            className="btn-stepper"
-                            onClick={() => addStatement(step.localId)}
-                            aria-label="Add statement box"
-                          >
-                            +
-                          </button>
+                          <button type="button" className="btn-stepper" onClick={() => addStatement(step.localId)}>+</button>
                           <span className="stepper-count">{step.statements.length}</span>
                           <button
                             type="button"
                             className="btn-stepper"
                             onClick={() => removeStatement(step.localId)}
                             disabled={step.statements.length === 0}
-                            aria-label="Remove last statement box"
                           >
                             −
                           </button>
@@ -382,12 +400,20 @@ export default function TutorialBuilder() {
                 <div className="statement-text-list">
                   {step.statements.map((st, i) => (
                     <div key={i} className="statement-text-row">
-                      <span className="statement-text-label">Statement {i + 1}</span>
+                      <span className="statement-text-label">Statement {i + 1} — English</span>
                       <textarea
                         className="instruction-input"
                         placeholder="e.g. Enter your username here."
                         value={st.text}
-                        onChange={(e) => updateStatementText(step.localId, i, e.target.value)}
+                        onChange={(e) => updateStatementField(step.localId, i, "text", e.target.value)}
+                        rows={2}
+                      />
+                      <span className="statement-text-label">Statement {i + 1} — Hindi (हिंदी)</span>
+                      <textarea
+                        className="instruction-input"
+                        placeholder="जैसे यहाँ अपना यूज़रनेम दर्ज करें।"
+                        value={st.textHindi}
+                        onChange={(e) => updateStatementField(step.localId, i, "textHindi", e.target.value)}
                         rows={2}
                       />
                     </div>
@@ -396,13 +422,28 @@ export default function TutorialBuilder() {
               )}
 
               {step.isFinalStep && (
-                <textarea
-                  className="instruction-input"
-                  placeholder="e.g. You're now logged in."
-                  value={step.finalMessageText}
-                  onChange={(e) => updateStep(step.localId, { finalMessageText: e.target.value })}
-                  rows={2}
-                />
+                <>
+                  <div className="bilingual-field">
+                    <span className="bilingual-label">Success message (English)</span>
+                    <textarea
+                      className="instruction-input"
+                      placeholder="e.g. You're now logged in."
+                      value={step.finalMessageText}
+                      onChange={(e) => updateStep(step.localId, { finalMessageText: e.target.value })}
+                      rows={2}
+                    />
+                  </div>
+                  <div className="bilingual-field">
+                    <span className="bilingual-label">Success message (Hindi) — हिंदी</span>
+                    <textarea
+                      className="instruction-input"
+                      placeholder="जैसे अब आप लॉग इन हो चुके हैं।"
+                      value={step.finalMessageTextHindi}
+                      onChange={(e) => updateStep(step.localId, { finalMessageTextHindi: e.target.value })}
+                      rows={2}
+                    />
+                  </div>
+                </>
               )}
             </div>
           ))}

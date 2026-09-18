@@ -6,8 +6,6 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      // Lets the frontend call "/api/..." and load "/uploads/..." images
-      // during dev without CORS pain.
       "/api": "http://localhost:4000",
       "/uploads": "http://localhost:4000",
     },
