@@ -3,6 +3,7 @@ import {
   listProducts,
   listTutorialsForProduct,
   listAllTutorials,
+  matchTutorialQuery,
   getTutorial,
   createProduct,
   createTutorial,
@@ -16,7 +17,15 @@ const router = Router();
 router.post("/uploads", upload.array("images", 20), uploadImages);
 router.get("/products", listProducts);
 router.post("/products", createProduct);
+
+// Flat list across all products — used by the admin's "manage tutorials"
+// screen and by the customer app's free-text search suggestions.
 router.get("/tutorials", listAllTutorials);
+
+// AI-based fallback match when the customer's typed question doesn't
+// obviously match any tutorial title as-is.
+router.post("/tutorials/match", matchTutorialQuery);
+
 router.get("/products/:slug/tutorials", listTutorialsForProduct);
 router.post("/products/:slug/tutorials", createTutorial);
 router.get("/products/:productSlug/tutorials/:tutorialSlug", getTutorial);

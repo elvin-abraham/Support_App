@@ -1,4 +1,5 @@
 import pool from "../config/db.js";
+import { matchTutorial } from "../config/aiProvider.js";
 
 // POST /api/uploads
 export async function uploadImages(req, res) {
@@ -44,7 +45,7 @@ export async function listTutorialsForProduct(req, res) {
 export async function listAllTutorials(req, res) {
   try {
     const [rows] = await pool.query(
-      `SELECT t.id, t.title, t.slug, p.name AS productName, p.slug AS productSlug
+      `SELECT t.id, t.title, t.title_hindi AS titleHindi, t.slug, p.name AS productName, p.slug AS productSlug
        FROM tutorials t
        JOIN products p ON p.id = t.product_id
        ORDER BY p.name, t.title`
@@ -53,6 +54,48 @@ export async function listAllTutorials(req, res) {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch tutorials" });
+  }
+}
+
+// POST /api/tutorials/match
+// Body: { query: string }
+// Used when the customer's typed question doesn't obviously match any
+// tutorial title as-is (different phrasing, other language, typos) —
+// the AI model picks the closest match from the actual tutorial list,
+// or reports none found so the frontend can fall back to the chatbot.
+export async function matchTutorialQuery(req, res) {
+  const { query } = req.body;
+  if (!query || typeof query !== "string" || !query.trim()) {
+    return res.status(400).json({ error: "query is required" });
+  }
+
+  try {
+    const [tutorials] = await pool.query(
+      `SELECT t.slug, t.title, t.title_hindi AS titleHindi, p.name AS productName, p.slug AS productSlug
+       FROM tutorials t
+       JOIN products p ON p.id = t.product_id`
+    );
+
+    if (tutorials.length === 0) {
+      return res.json({ matched: false });
+    }
+
+    const matchedSlug = await matchTutorial(query, tutorials);
+    if (!matchedSlug) {
+      return res.json({ matched: false });
+    }
+
+    const match = tutorials.find((t) => t.slug === matchedSlug);
+    if (!match) {
+      // Model returned a slug that doesn't actually exist — treat as no match
+      // rather than sending the customer somewhere broken.
+      return res.json({ matched: false });
+    }
+
+    res.json({ matched: true, productSlug: match.productSlug, tutorialSlug: match.slug });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Search is unavailable right now. Please try again shortly." });
   }
 }
 

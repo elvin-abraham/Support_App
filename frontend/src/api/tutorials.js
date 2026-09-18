@@ -15,3 +15,23 @@ export async function fetchTutorial(productSlug, tutorialSlug) {
   if (!res.ok) throw new Error("Failed to fetch tutorial");
   return res.json();
 }
+
+// Full flat list across all products — used to power live, local search
+// suggestions as the customer types.
+export async function fetchAllTutorials() {
+  const res = await fetch(`${BASE_URL}/tutorials`);
+  if (!res.ok) throw new Error("Failed to fetch tutorials");
+  return res.json();
+}
+
+// AI-based fallback when the customer's typed question doesn't obviously
+// match any tutorial title (different phrasing, another language, typos).
+export async function matchTutorialQuery(query) {
+  const res = await fetch(`${BASE_URL}/tutorials/match`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ query }),
+  });
+  if (!res.ok) throw new Error("Search is unavailable right now");
+  return res.json(); // { matched: boolean, productSlug?, tutorialSlug? }
+}

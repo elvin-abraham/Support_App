@@ -19,6 +19,10 @@ export const strings = {
     selectQuestion: "Select a question…",
     noBackend: "We can't reach the tutorial library right now. Start the backend (npm run dev in backend/), or preview a sample walkthrough below in the meantime.",
     previewSample: "Preview a sample tutorial",
+    searchPlaceholder: "Type your question, e.g. How to login?",
+    searchButton: "Search",
+    searching: "Looking for the right tutorial…",
+    noMatch: "We couldn't find a matching tutorial for that. Try rephrasing your question.",
     exit: "Exit",
     back: "Back",
     next: "Next",
@@ -36,6 +40,10 @@ export const strings = {
     selectQuestion: "प्रश्न चुनें…",
     noBackend: "अभी हम मार्गदर्शिका सूची तक नहीं पहुँच पा रहे। बैकएंड शुरू करें (backend/ में npm run dev), या इस बीच नीचे एक नमूना मार्गदर्शिका देखें।",
     previewSample: "नमूना मार्गदर्शिका देखें",
+    searchPlaceholder: "अपना प्रश्न लिखें, जैसे लॉगिन कैसे करें?",
+    searchButton: "खोजें",
+    searching: "सही मार्गदर्शिका खोजी जा रही है…",
+    noMatch: "इसके लिए कोई मिलती-जुलती मार्गदर्शिका नहीं मिली। कृपया अपना प्रश्न अलग तरीके से लिखें।",
     exit: "बाहर निकलें",
     back: "वापस",
     next: "आगे",
@@ -57,5 +65,3 @@ export function pickText(englishText, hindiText, lang) {
   if (lang === "hi" && hindiText && hindiText.trim()) return hindiText;
   return englishText || hindiText || "";
 }
-
-
