@@ -35,3 +35,19 @@ export async function matchTutorialQuery(query) {
   if (!res.ok) throw new Error("Search is unavailable right now");
   return res.json(); // { matched: boolean, productSlug?, tutorialSlug? }
 }
+
+// Sends a message to the chatbot, along with the conversation so far.
+// Returns { reply, tutorialSuggestion? } — tutorialSuggestion is present
+// when the AI's answer relates to a specific existing tutorial.
+export async function sendChatMessage(message, history) {
+  const res = await fetch(`${BASE_URL}/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ message, history }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || "Chat is unavailable right now");
+  }
+  return res.json();
+}

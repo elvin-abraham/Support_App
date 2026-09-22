@@ -140,3 +140,87 @@ main > * { width: 100%; }
 
 .search-status { font-size: 13.5px; color: var(--ink-soft); margin: 0; text-align: center; }
 .search-status--empty { color: var(--spotlight-dark); }
+
+/* --- Chat mode --- */
+/* The selector screen normally grows with content (height: auto), but a
+   chat conversation should scroll internally instead of making the
+   whole page taller with every message. */
+.app-shell:has(.chat-card) {
+  height: 100vh;
+  overflow: hidden;
+  padding: 24px 24px 40px;
+}
+
+.chat-card {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  padding: 16px 20px 20px;
+}
+
+.chat-header {
+  flex-shrink: 0;
+  margin-bottom: 8px;
+}
+
+.chat-messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 2px;
+}
+
+.chat-bubble {
+  max-width: 80%;
+  padding: 10px 14px;
+  border-radius: 12px;
+  font-size: 14px;
+  line-height: 1.5;
+}
+.chat-bubble p { margin: 0; }
+
+.chat-bubble--user {
+  align-self: flex-end;
+  background: var(--brand);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.chat-bubble--assistant {
+  align-self: flex-start;
+  background: var(--paper);
+  color: var(--ink);
+  border: 1px solid var(--line);
+  border-bottom-left-radius: 4px;
+}
+
+.chat-bubble--loading {
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+.chat-tutorial-card {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--brand);
+  background: var(--brand-soft);
+  color: var(--brand-dark);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.chat-tutorial-card:hover { background: var(--brand); color: #fff; }
+
+.chat-input-form {
+  flex-shrink: 0;
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
