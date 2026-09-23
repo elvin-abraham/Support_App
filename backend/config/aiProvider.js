@@ -52,13 +52,9 @@ async function callModel(systemPrompt, messages) {
 
 // async function callGemini(systemPrompt, messages) {
 //   const apiKey = process.env.GEMINI_API_KEY;
-
 //   if (!apiKey) {
-//     throw new Error(
-//       "GEMINI_API_KEY is not set in .env — get a free key at aistudio.google.com"
-//     );
+//     throw new Error("GEMINI_API_KEY is not set in .env — get a free key at aistudio.google.com");
 //   }
-
 //   const model = process.env.GEMINI_MODEL || "gemini-3.6-flash";
 
 //   const contents = messages.map((m) => ({
@@ -66,89 +62,29 @@ async function callModel(systemPrompt, messages) {
 //     parts: [{ text: m.content }],
 //   }));
 
-//   const url =
-//     `https://generativelanguage.googleapis.com/v1beta/models/${model}` +
-//     `:generateContent?key=${apiKey}`;
-
-//   const maxRetries = 3;
-
-//   for (let attempt = 0; attempt <= maxRetries; attempt++) {
-//     try {
-//       const res = await fetch(url, {
-//         method: "POST",
-//         headers: {
-//           "Content-Type": "application/json",
-//         },
-//         body: JSON.stringify({
-//           systemInstruction: {
-//             parts: [{ text: systemPrompt }],
-//           },
-//           contents,
-//         }),
-//       });
-
-//       if (res.ok) {
-//         const data = await res.json();
-
-//         const reply =
-//           data?.candidates?.[0]?.content?.parts?.[0]?.text;
-
-//         if (!reply) {
-//           throw new Error(
-//             "Gemini returned no usable reply — check the response shape hasn't changed."
-//           );
-//         }
-
-//         return reply;
-//       }
-
-//       const body = await res.text();
-
-//       // Retry only temporary/server-side errors.
-//       if ([408, 429, 500, 502, 503, 504].includes(res.status)) {
-//         if (attempt < maxRetries) {
-//           const delay = Math.min(1000 * 2 ** attempt, 8000);
-
-//           console.log(
-//             `Gemini returned ${res.status}. ` +
-//             `Retrying in ${delay / 1000}s... ` +
-//             `(attempt ${attempt + 1}/${maxRetries})`
-//           );
-
-//           await new Promise((resolve) =>
-//             setTimeout(resolve, delay)
-//           );
-
-//           continue;
-//         }
-//       }
-
-//       throw new Error(
-//         `Gemini API error (${res.status}): ${body}`
-//       );
-//     } catch (error) {
-//       // Retry network errors as well.
-//       if (attempt < maxRetries && !error.message.startsWith("Gemini API error")) {
-//         const delay = Math.min(1000 * 2 ** attempt, 8000);
-
-//         console.log(
-//           `Gemini network error. ` +
-//           `Retrying in ${delay / 1000}s... ` +
-//           `(attempt ${attempt + 1}/${maxRetries})`
-//         );
-
-//         await new Promise((resolve) =>
-//           setTimeout(resolve, delay)
-//         );
-
-//         continue;
-//       }
-
-//       throw error;
+//   const res = await fetch(
+//     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+//     {
+//       method: "POST",
+//       headers: { "Content-Type": "application/json" },
+//       body: JSON.stringify({
+//         systemInstruction: { parts: [{ text: systemPrompt }] },
+//         contents,
+//       }),
 //     }
+//   );
+
+//   if (!res.ok) {
+//     const body = await res.text();
+//     throw new Error(`Gemini API error (${res.status}): ${body}`);
 //   }
 
-//   throw new Error("Gemini request failed after all retry attempts.");
+//   const data = await res.json();
+//   const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+//   if (!reply) {
+//     throw new Error("Gemini returned no usable reply — check the response shape hasn't changed.");
+//   }
+//   return reply;
 // }
 
 async function callGemini(systemPrompt, messages) {
@@ -171,8 +107,7 @@ async function callGemini(systemPrompt, messages) {
     `https://generativelanguage.googleapis.com/v1beta/models/${model}` +
     `:generateContent?key=${apiKey}`;
 
-  // Give temporary 429/503 errors a few chances to recover.
-  const maxRetries = 4;
+  const maxRetries = 3;
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
@@ -206,25 +141,14 @@ async function callGemini(systemPrompt, messages) {
 
       const body = await res.text();
 
-      // Temporary errors that are worth retrying.
+      // Retry only temporary/server-side errors.
       if ([408, 429, 500, 502, 503, 504].includes(res.status)) {
         if (attempt < maxRetries) {
-          // Exponential backoff:
-          // ~2s → ~4s → ~8s → ~16s
-          //
-          // Small random jitter prevents repeated requests from
-          // retrying at exactly the same time.
-          const baseDelay = Math.min(
-            2000 * 2 ** attempt,
-            16000
-          );
-
-          const jitter = Math.floor(Math.random() * 1000);
-          const delay = baseDelay + jitter;
+          const delay = Math.min(1000 * 2 ** attempt, 8000);
 
           console.log(
             `Gemini returned ${res.status}. ` +
-            `Retrying in ${(delay / 1000).toFixed(1)}s... ` +
+            `Retrying in ${delay / 1000}s... ` +
             `(attempt ${attempt + 1}/${maxRetries})`
           );
 
@@ -240,22 +164,13 @@ async function callGemini(systemPrompt, messages) {
         `Gemini API error (${res.status}): ${body}`
       );
     } catch (error) {
-      // Retry network errors, but don't retry a final Gemini API error.
-      if (
-        attempt < maxRetries &&
-        !error.message.startsWith("Gemini API error")
-      ) {
-        const baseDelay = Math.min(
-          2000 * 2 ** attempt,
-          16000
-        );
-
-        const jitter = Math.floor(Math.random() * 1000);
-        const delay = baseDelay + jitter;
+      // Retry network errors as well.
+      if (attempt < maxRetries && !error.message.startsWith("Gemini API error")) {
+        const delay = Math.min(1000 * 2 ** attempt, 8000);
 
         console.log(
           `Gemini network error. ` +
-          `Retrying in ${(delay / 1000).toFixed(1)}s... ` +
+          `Retrying in ${delay / 1000}s... ` +
           `(attempt ${attempt + 1}/${maxRetries})`
         );
 
@@ -270,9 +185,7 @@ async function callGemini(systemPrompt, messages) {
     }
   }
 
-  throw new Error(
-    "Gemini request failed after all retry attempts."
-  );
+  throw new Error("Gemini request failed after all retry attempts.");
 }
 
 async function callAnthropic(systemPrompt, messages) {
@@ -313,24 +226,4 @@ async function callAnthropic(systemPrompt, messages) {
 // --- Chatbot: full knowledge-base-backed conversational answers ---
 export async function getChatReply(messages, tutorials = []) {
   return callModel(buildChatSystemPrompt(tutorials), messages);
-}
-
-// --- Tutorial matching: does NOT touch the knowledge base at all —
-// this only needs the list of tutorial titles you actually have, so it
-// stays small and cheap regardless of how big the KB grows. ---
-export async function matchTutorial(query, tutorials) {
-  const list = tutorials
-    .map((t, i) => `${i + 1}. [${t.slug}] "${t.title}" (Hindi: "${t.titleHindi || "—"}") — Product: ${t.productName}`)
-    .join("\n");
-
-  const systemPrompt = `You match a customer's free-text question (in English, Hindi, Hinglish, or with typos/grammar mistakes) to the single closest tutorial from this list. If nothing genuinely matches the customer's intent, respond with exactly the word NONE.
-
-Tutorials:
-${list}
-
-Respond with ONLY the bracketed slug of the best match (e.g. "how-to-login"), or the word NONE. No other text.`;
-
-  const reply = await callModel(systemPrompt, [{ role: "user", content: query }]);
-  const cleaned = reply.trim().replace(/^\[|\]$/g, "");
-  return cleaned.toUpperCase() === "NONE" ? null : cleaned;
 }

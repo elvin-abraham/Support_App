@@ -34,6 +34,7 @@ export default function TutorialBuilder() {
 
   const [title, setTitle] = useState("");
   const [titleHindi, setTitleHindi] = useState("");
+  const [relatedQuestions, setRelatedQuestions] = useState([""]);
   const [steps, setSteps] = useState([makeEmptyStep()]);
 
   const [mode, setMode] = useState("build"); // "build" | "preview" | "published"
@@ -53,6 +54,23 @@ export default function TutorialBuilder() {
   function addSlide() {
     setSteps((prev) => [...prev, makeEmptyStep()]);
   }
+  function updateRelatedQuestion(index, value) {
+    setRelatedQuestions((prev) =>
+      prev.map((question, i) => (i === index ? value : question))
+    );
+  }
+
+  function addRelatedQuestion() {
+    setRelatedQuestions((prev) => [...prev, ""]);
+  }
+
+  function removeRelatedQuestion(index) {
+    setRelatedQuestions((prev) => {
+      if (prev.length === 1) return [""];
+      return prev.filter((_, i) => i !== index);
+    });
+  }
+
 
   function removeSlide(localId) {
     setSteps((prev) => (prev.length > 1 ? prev.filter((s) => s.localId !== localId) : prev));
@@ -125,6 +143,7 @@ export default function TutorialBuilder() {
       productNameHindi,
       slug: slugify(title),
       description: "",
+      relatedQuestions: relatedQuestions.filter((question) => question.trim()),
       steps: steps.map((s, i) => ({
         stepNumber: i + 1,
         screenshotUrl: s.screenshotUrl,
@@ -157,6 +176,7 @@ export default function TutorialBuilder() {
   function resetForm() {
     setTitle("");
     setTitleHindi("");
+    setRelatedQuestions([""]);
     setSteps([makeEmptyStep()]);
     setIsNewProduct(false);
     setSelectedProductSlug("");
@@ -284,7 +304,39 @@ export default function TutorialBuilder() {
       </div>
 
       <div className="admin-card">
-        <h3>3. Slides</h3>
+        <h3>3. Related questions / search phrases</h3>
+        <p className="admin-hint related-questions-intro">
+          Add natural ways a customer might ask the same question. You do not need to add every typo.
+          The search will also use the English and Hindi question above automatically.
+        </p>
+        <div className="related-question-list">
+          {relatedQuestions.map((question, index) => (
+            <div className="related-question-row" key={index}>
+              <input
+                type="text"
+                placeholder={index === 0 ? "e.g. How do I login?" : "Another way a customer might ask…"}
+                value={question}
+                onChange={(e) => updateRelatedQuestion(index, e.target.value)}
+              />
+              <button
+                type="button"
+                className="btn-ghost-outline related-question-remove"
+                onClick={() => removeRelatedQuestion(index)}
+                disabled={relatedQuestions.length === 1}
+                aria-label={`Remove related question ${index + 1}`}
+              >
+                Remove
+              </button>
+            </div>
+          ))}
+        </div>
+        <button type="button" className="btn-add-related" onClick={addRelatedQuestion}>
+          + Add another related question
+        </button>
+      </div>
+
+      <div className="admin-card">
+        <h3>4. Slides</h3>
         <div className="slide-list">
           {steps.map((step, index) => (
             <div key={step.localId} className="slide-card">

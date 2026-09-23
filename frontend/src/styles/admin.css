@@ -86,3 +86,13 @@
 .editor-badge--statement { position: static; margin-right: 6px; flex-shrink: 0; }
 .editor-statement { position: absolute; max-width: 200px; background: var(--ink); color: #fff; padding: 6px 10px; border-radius: 7px; font-size: 12px; cursor: move; display: flex; align-items: flex-start; }
 .editor-statement em { opacity: 0.7; font-style: normal; }
+
+.related-questions-intro { margin: -4px 0 14px; line-height: 1.5; }
+.related-question-list { display: flex; flex-direction: column; gap: 8px; }
+.related-question-row { display: flex; align-items: center; gap: 8px; }
+.related-question-row input { flex: 1; min-width: 0; padding: 10px 12px; border-radius: 8px; border: 1px solid var(--line); font-family: var(--font-body); font-size: 14px; background: var(--surface); color: var(--ink); }
+.related-question-row input:focus { border-color: var(--brand); }
+.related-question-remove { padding: 9px 12px; }
+.related-question-remove:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-add-related { margin-top: 12px; padding: 9px 12px; border-radius: 8px; border: 1px dashed var(--line); background: transparent; color: var(--brand); font-size: 13px; font-weight: 600; cursor: pointer; }
+.btn-add-related:hover { border-color: var(--brand); background: var(--brand-soft); }

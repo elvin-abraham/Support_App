@@ -24,7 +24,7 @@ export async function fetchAllTutorials() {
   return res.json();
 }
 
-// AI-based fallback when the customer's typed question doesn't obviously
+// Local fallback when the customer's typed question doesn't obviously
 // match any tutorial title (different phrasing, another language, typos).
 export async function matchTutorialQuery(query) {
   const res = await fetch(`${BASE_URL}/tutorials/match`, {

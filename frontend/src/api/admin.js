@@ -25,13 +25,14 @@ export async function createProduct(name, nameHindi, slug) {
   return res.json();
 }
 
+// relatedQuestions: customer search phrases for this tutorial.
 // steps: [{ stepNumber, screenshotUrl, highlights: [{x,y,width,height}],
 //           statements: [{x,y,text,textHindi}], finalMessage, finalMessageHindi, isFinalStep }]
-export async function createTutorial(productSlug, { title, titleHindi, slug, description, steps }) {
+export async function createTutorial(productSlug, { title, titleHindi, slug, description, relatedQuestions, steps }) {
   const res = await fetch(`${BASE_URL}/products/${productSlug}/tutorials`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title, titleHindi, slug, description, steps }),
+    body: JSON.stringify({ title, titleHindi, slug, description, relatedQuestions, steps }),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));

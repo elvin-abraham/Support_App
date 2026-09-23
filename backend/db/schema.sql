@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS tutorials (
   title_hindi VARCHAR(200) NULL,
   slug VARCHAR(200) NOT NULL,
   description VARCHAR(500),
+  related_questions JSON NULL,
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
   UNIQUE KEY uniq_product_tutorial (product_id, slug)

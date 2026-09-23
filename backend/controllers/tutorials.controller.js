@@ -1,5 +1,5 @@
 import pool from "../config/db.js";
-import { matchTutorial } from "../config/aiProvider.js";
+import { findBestTutorial } from "../utils/tutorialMatcher.js";
 
 // POST /api/uploads
 export async function uploadImages(req, res) {
@@ -59,10 +59,10 @@ export async function listAllTutorials(req, res) {
 
 // POST /api/tutorials/match
 // Body: { query: string }
-// Used when the customer's typed question doesn't obviously match any
-// tutorial title as-is (different phrasing, other language, typos) —
-// the AI model picks the closest match from the actual tutorial list,
-// or reports none found so the frontend can fall back to the chatbot.
+// Used when the customer's typed question doesn't exactly match a tutorial
+// title. Matching is fully local: tutorial titles, Hindi titles, and the
+// related questions entered in the Admin Panel are compared without an AI
+// request, so tutorial search does not consume Gemini quota.
 export async function matchTutorialQuery(req, res) {
   const { query } = req.body;
   if (!query || typeof query !== "string" || !query.trim()) {
@@ -71,7 +71,9 @@ export async function matchTutorialQuery(req, res) {
 
   try {
     const [tutorials] = await pool.query(
-      `SELECT t.slug, t.title, t.title_hindi AS titleHindi, p.name AS productName, p.slug AS productSlug
+      `SELECT t.slug, t.title, t.title_hindi AS titleHindi,
+              t.related_questions AS relatedQuestions,
+              p.name AS productName, p.slug AS productSlug
        FROM tutorials t
        JOIN products p ON p.id = t.product_id`
     );
@@ -80,15 +82,8 @@ export async function matchTutorialQuery(req, res) {
       return res.json({ matched: false });
     }
 
-    const matchedSlug = await matchTutorial(query, tutorials);
-    if (!matchedSlug) {
-      return res.json({ matched: false });
-    }
-
-    const match = tutorials.find((t) => t.slug === matchedSlug);
+    const match = findBestTutorial(query, tutorials);
     if (!match) {
-      // Model returned a slug that doesn't actually exist — treat as no match
-      // rather than sending the customer somewhere broken.
       return res.json({ matched: false });
     }
 
@@ -159,13 +154,13 @@ export async function createProduct(req, res) {
 }
 
 // POST /api/products/:slug/tutorials
-// Body: { title, titleHindi, slug, description, steps: [{ stepNumber,
+// Body: { title, titleHindi, slug, description, relatedQuestions: [], steps: [{ stepNumber,
 //         screenshotUrl, highlights: [{x,y,width,height}],
 //         statements: [{x,y,text,textHindi}], finalMessage,
 //         finalMessageHindi, isFinalStep }] }
 export async function createTutorial(req, res) {
   const { slug: productSlug } = req.params;
-  const { title, titleHindi, slug, description, steps = [] } = req.body;
+  const { title, titleHindi, slug, description, relatedQuestions = [], steps = [] } = req.body;
 
   if (!title || !slug) {
     return res.status(400).json({ error: "title and slug are required" });
@@ -182,8 +177,15 @@ export async function createTutorial(req, res) {
     }
 
     const [tutorialResult] = await connection.query(
-      "INSERT INTO tutorials (product_id, title, title_hindi, slug, description) VALUES (?, ?, ?, ?, ?)",
-      [product.id, title, titleHindi || null, slug, description || null]
+      "INSERT INTO tutorials (product_id, title, title_hindi, slug, description, related_questions) VALUES (?, ?, ?, ?, ?, ?)",
+      [
+        product.id,
+        title,
+        titleHindi || null,
+        slug,
+        description || null,
+        JSON.stringify(Array.isArray(relatedQuestions) ? relatedQuestions.filter((q) => typeof q === "string" && q.trim()).map((q) => q.trim()) : []),
+      ]
     );
     const tutorialId = tutorialResult.insertId;
 

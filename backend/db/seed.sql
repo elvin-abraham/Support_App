@@ -4,8 +4,17 @@ INSERT INTO products (name, name_hindi, slug) VALUES ('Incluziv Cloud', 'इं�
 
 SET @product_id = LAST_INSERT_ID();
 
-INSERT INTO tutorials (product_id, title, title_hindi, slug, description)
-VALUES (@product_id, 'How to Login', 'लॉगिन कैसे करें', 'how-to-login', 'Step-by-step guide to logging into Incluziv Cloud.');
+INSERT INTO tutorials (product_id, title, title_hindi, slug, description, related_questions)
+VALUES (@product_id, 'How to Login', 'लॉगिन कैसे करें', 'how-to-login', 'Step-by-step guide to logging into Incluziv Cloud.', JSON_ARRAY(
+  'How do I login?',
+  'How can I login?',
+  'Login kaise kare?',
+  'Login kaise karu?',
+  'Kaisa login karna hai?',
+  'लॉगिन कैसे करना है?',
+  'लॉगिन कैसे करें?',
+  'Login karne ka tarika kya hai?'
+));
 
 SET @tutorial_id = LAST_INSERT_ID();
 
