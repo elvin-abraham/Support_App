@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { fetchAllTutorials, deleteTutorial } from "../api/admin.js";
 
-export default function ManageTutorials() {
+export default function ManageTutorials({ onEdit }) {
   const [tutorials, setTutorials] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -59,7 +59,10 @@ export default function ManageTutorials() {
                     <button className="btn-ghost-outline" onClick={() => setPendingDeleteSlug(null)}>Cancel</button>
                   </span>
                 ) : (
-                  <button className="btn-danger-outline" onClick={() => setPendingDeleteSlug(t.slug)}>Delete</button>
+                  <span className="tutorial-row-actions">
+                    <button className="btn-ghost-outline" onClick={() => onEdit(t)}>Edit</button>
+                    <button className="btn-danger-outline" onClick={() => setPendingDeleteSlug(t.slug)}>Delete</button>
+                  </span>
                 )}
               </li>
             ))}

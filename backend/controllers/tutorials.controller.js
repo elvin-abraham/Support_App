@@ -1,6 +1,19 @@
 import pool from "../config/db.js";
 import { findBestTutorial } from "../utils/tutorialMatcher.js";
 
+function parseJsonArray(value) {
+  if (Array.isArray(value)) return value;
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
 // POST /api/uploads
 export async function uploadImages(req, res) {
   const files = req.files || [];
@@ -100,6 +113,7 @@ export async function getTutorial(req, res) {
   try {
     const [[tutorial]] = await pool.query(
       `SELECT t.id, t.title, t.title_hindi AS titleHindi, t.slug, t.description,
+              t.related_questions AS relatedQuestions,
               p.name AS productName, p.name_hindi AS productNameHindi, p.slug AS productSlug
        FROM tutorials t
        JOIN products p ON p.id = t.product_id
@@ -124,11 +138,15 @@ export async function getTutorial(req, res) {
 
     const normalizedSteps = steps.map((s) => ({
       ...s,
-      highlights: s.highlights || [],
-      statements: s.statements || [],
+      highlights: parseJsonArray(s.highlights),
+      statements: parseJsonArray(s.statements),
     }));
 
-    res.json({ ...tutorial, steps: normalizedSteps });
+    res.json({
+      ...tutorial,
+      relatedQuestions: parseJsonArray(tutorial.relatedQuestions),
+      steps: normalizedSteps,
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: "Failed to fetch tutorial" });
@@ -215,6 +233,97 @@ export async function createTutorial(req, res) {
     await connection.rollback();
     console.error(err);
     res.status(500).json({ error: "Failed to create tutorial" });
+  } finally {
+    connection.release();
+  }
+}
+
+// PUT /api/products/:productSlug/tutorials/:tutorialSlug
+// Updates an existing tutorial and replaces its step data in one transaction.
+export async function updateTutorial(req, res) {
+  const { productSlug, tutorialSlug } = req.params;
+  const { title, titleHindi, slug, description, relatedQuestions = [], steps = [] } = req.body;
+
+  if (!title || !slug) {
+    return res.status(400).json({ error: "title and slug are required" });
+  }
+  if (!Array.isArray(steps) || steps.length === 0) {
+    return res.status(400).json({ error: "At least one tutorial step is required" });
+  }
+
+  const connection = await pool.getConnection();
+  try {
+    await connection.beginTransaction();
+
+    const [[tutorial]] = await connection.query(
+      `SELECT t.id, p.id AS productId
+       FROM tutorials t
+       JOIN products p ON p.id = t.product_id
+       WHERE p.slug = ? AND t.slug = ?`,
+      [productSlug, tutorialSlug]
+    );
+
+    if (!tutorial) {
+      await connection.rollback();
+      return res.status(404).json({ error: "Tutorial not found" });
+    }
+
+    const [duplicate] = await connection.query(
+      `SELECT id FROM tutorials
+       WHERE product_id = ? AND slug = ? AND id <> ?`,
+      [tutorial.productId, slug, tutorial.id]
+    );
+    if (duplicate.length > 0) {
+      await connection.rollback();
+      return res.status(409).json({ error: "Another tutorial already uses this question/slug for this product" });
+    }
+
+    await connection.query(
+      `UPDATE tutorials
+       SET title = ?, title_hindi = ?, slug = ?, description = ?, related_questions = ?
+       WHERE id = ?`,
+      [
+        title.trim(),
+        titleHindi?.trim() || null,
+        slug.trim(),
+        description?.trim() || null,
+        JSON.stringify(
+          Array.isArray(relatedQuestions)
+            ? relatedQuestions.filter((q) => typeof q === "string" && q.trim()).map((q) => q.trim())
+            : []
+        ),
+        tutorial.id,
+      ]
+    );
+
+    await connection.query("DELETE FROM tutorial_steps WHERE tutorial_id = ?", [tutorial.id]);
+
+    for (const [index, step] of steps.entries()) {
+      await connection.query(
+        `INSERT INTO tutorial_steps
+          (tutorial_id, step_number, screenshot_url,
+           highlight_x, highlight_y, highlight_width, highlight_height,
+           highlights, statements, instruction_text, instruction_text_hindi, is_final_step)
+         VALUES (?, ?, ?, 0, 0, 0, 0, ?, ?, ?, ?, ?)`,
+        [
+          tutorial.id,
+          index + 1,
+          step.screenshotUrl || "",
+          JSON.stringify(step.highlights || []),
+          JSON.stringify(step.statements || []),
+          step.finalMessage || "",
+          step.finalMessageHindi || null,
+          !!step.isFinalStep,
+        ]
+      );
+    }
+
+    await connection.commit();
+    res.json({ id: tutorial.id, title: title.trim(), slug: slug.trim() });
+  } catch (err) {
+    await connection.rollback();
+    console.error(err);
+    res.status(500).json({ error: "Failed to update tutorial" });
   } finally {
     connection.release();
   }

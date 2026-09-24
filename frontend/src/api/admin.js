@@ -47,6 +47,19 @@ export async function fetchAllTutorials() {
   return res.json();
 }
 
+export async function updateTutorial(productSlug, tutorialSlug, { title, titleHindi, slug, description, relatedQuestions, steps }) {
+  const res = await fetch(`${BASE_URL}/products/${productSlug}/tutorials/${tutorialSlug}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, titleHindi, slug, description, relatedQuestions, steps }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || "Failed to update tutorial");
+  }
+  return res.json();
+}
+
 export async function deleteTutorial(productSlug, tutorialSlug) {
   const res = await fetch(`${BASE_URL}/products/${productSlug}/tutorials/${tutorialSlug}`, { method: "DELETE" });
   if (!res.ok) {

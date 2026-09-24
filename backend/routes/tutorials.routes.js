@@ -7,6 +7,7 @@ import {
   getTutorial,
   createProduct,
   createTutorial,
+  updateTutorial,
   deleteTutorial,
   uploadImages,
 } from "../controllers/tutorials.controller.js";
@@ -28,6 +29,7 @@ router.post("/tutorials/match", matchTutorialQuery);
 
 router.get("/products/:slug/tutorials", listTutorialsForProduct);
 router.post("/products/:slug/tutorials", createTutorial);
+router.put("/products/:productSlug/tutorials/:tutorialSlug", updateTutorial);
 router.get("/products/:productSlug/tutorials/:tutorialSlug", getTutorial);
 router.delete("/products/:productSlug/tutorials/:tutorialSlug", deleteTutorial);
 

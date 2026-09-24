@@ -50,7 +50,9 @@ export default function ProductSelector({ onSelectTutorial }) {
   function selectTutorial(tut) {
     setQuery("");
     setNoMatch(false);
-    onSelectTutorial({ productSlug: tut.productSlug, tutorialSlug: tut.slug });
+    const tutorialSlug = tut.tutorialSlug || tut.slug;
+    if (!tut.productSlug || !tutorialSlug) return;
+    onSelectTutorial({ productSlug: tut.productSlug, tutorialSlug });
   }
 
   // Starts a brand-new chat from a query that didn't directly match any

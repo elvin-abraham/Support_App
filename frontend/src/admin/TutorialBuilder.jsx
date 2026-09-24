@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
-import { fetchProducts } from "../api/tutorials.js";
-import { uploadImage, createProduct, createTutorial, slugify } from "../api/admin.js";
+import { fetchProducts, fetchTutorial } from "../api/tutorials.js";
+import { uploadImage, createProduct, createTutorial, updateTutorial, slugify } from "../api/admin.js";
 import HighlightEditor from "./HighlightEditor.jsx";
 import TutorialPlayer from "../components/TutorialPlayer.jsx";
 import LanguageToggle from "../components/LanguageToggle.jsx";
@@ -25,7 +25,7 @@ function makeEmptyStep() {
   };
 }
 
-export default function TutorialBuilder() {
+export default function TutorialBuilder({ editTutorial = null, onCancelEdit, onSaved }) {
   const [products, setProducts] = useState([]);
   const [selectedProductSlug, setSelectedProductSlug] = useState("");
   const [isNewProduct, setIsNewProduct] = useState(false);
@@ -39,6 +39,8 @@ export default function TutorialBuilder() {
 
   const [mode, setMode] = useState("build"); // "build" | "preview" | "published"
   const [publishing, setPublishing] = useState(false);
+  const [loadingEdit, setLoadingEdit] = useState(false);
+  const [editError, setEditError] = useState("");
   const [publishError, setPublishError] = useState("");
 
   useEffect(() => {
@@ -46,6 +48,52 @@ export default function TutorialBuilder() {
       .then(setProducts)
       .catch(() => setProducts([]));
   }, []);
+
+  useEffect(() => {
+    if (!editTutorial) return;
+
+    let cancelled = false;
+    setLoadingEdit(true);
+    setEditError("");
+    setMode("build");
+
+    fetchTutorial(editTutorial.productSlug, editTutorial.slug)
+      .then((tutorial) => {
+        if (cancelled) return;
+        setSelectedProductSlug(tutorial.productSlug);
+        setIsNewProduct(false);
+        setTitle(tutorial.title || "");
+        setTitleHindi(tutorial.titleHindi || "");
+        setRelatedQuestions(
+          Array.isArray(tutorial.relatedQuestions) && tutorial.relatedQuestions.length
+            ? tutorial.relatedQuestions
+            : [""]
+        );
+        setSteps(
+          (tutorial.steps || []).map((step) => ({
+            localId: nextLocalId++,
+            screenshotUrl: step.screenshotUrl || "",
+            uploading: false,
+            uploadError: "",
+            showHighlights: Array.isArray(step.highlights) && step.highlights.length > 0,
+            highlights: Array.isArray(step.highlights) ? step.highlights : [],
+            showStatements: Array.isArray(step.statements) && step.statements.length > 0,
+            statements: Array.isArray(step.statements) ? step.statements : [],
+            isFinalStep: Boolean(step.isFinalStep),
+            finalMessageText: step.finalMessage || "",
+            finalMessageTextHindi: step.finalMessageHindi || "",
+          }))
+        );
+      })
+      .catch((err) => {
+        if (!cancelled) setEditError(err.message);
+      })
+      .finally(() => {
+        if (!cancelled) setLoadingEdit(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [editTutorial]);
 
   function updateStep(localId, patch) {
     setSteps((prev) => prev.map((s) => (s.localId === localId ? { ...s, ...patch } : s)));
@@ -164,6 +212,11 @@ export default function TutorialBuilder() {
         await createProduct(newProductName.trim(), newProductNameHindi.trim(), productSlug);
       }
       const payload = buildTutorialPayload();
+      if (editTutorial) {
+        await updateTutorial(editTutorial.productSlug, editTutorial.slug, payload);
+        if (onSaved) onSaved();
+        return;
+      }
       await createTutorial(productSlug, payload);
       setMode("published");
     } catch (err) {
@@ -218,7 +271,7 @@ export default function TutorialBuilder() {
               Back to edit
             </button>
             <button className="btn-primary" onClick={handlePublish} disabled={publishing}>
-              {publishing ? "Publishing…" : "Confirm & Publish"}
+              {publishing ? (editTutorial ? "Saving…" : "Publishing…") : (editTutorial ? "Save changes" : "Confirm & Publish")}
             </button>
           </div>
         </div>
@@ -234,13 +287,22 @@ export default function TutorialBuilder() {
   return (
     <div className="admin-shell">
       <header className="admin-header">
-        <h1>Create a tutorial</h1>
-        <p>Select a product, describe the question, then walk through each slide. Fields marked English/Hindi are what customers see — fill in both.</p>
+        <h1>{editTutorial ? "Edit tutorial" : "Create a tutorial"}</h1>
+        <p>{editTutorial ? "Update the question, search phrases, screenshots, highlights, statements, and final messages. Your changes will replace the existing tutorial." : "Select a product, describe the question, then walk through each slide. Fields marked English/Hindi are what customers see — fill in both."}</p>
       </header>
+      {loadingEdit && <p className="admin-hint">Loading tutorial…</p>}
+      {editError && <p className="admin-error">{editError}</p>}
 
       <div className="admin-card">
         <h3>1. Product</h3>
-        {!isNewProduct ? (
+        {editTutorial ? (
+          <div className="admin-row">
+            <select value={selectedProductSlug} disabled>
+              <option value={selectedProductSlug}>{productName || "Loading product…"}</option>
+            </select>
+            <span className="admin-hint">The product stays the same while editing.</span>
+          </div>
+        ) : !isNewProduct ? (
           <div className="admin-row">
             <select value={selectedProductSlug} onChange={(e) => setSelectedProductSlug(e.target.value)}>
               <option value="">Select a product…</option>
@@ -507,7 +569,12 @@ export default function TutorialBuilder() {
       </div>
 
       <div className="admin-actions">
-        <button className="btn-primary" disabled={!readyForPreview} onClick={() => setMode("preview")}>
+        {editTutorial && (
+          <button className="btn-secondary" onClick={onCancelEdit} disabled={publishing}>
+            Cancel editing
+          </button>
+        )}
+        <button className="btn-primary" disabled={!readyForPreview || loadingEdit} onClick={() => setMode("preview")}>
           Preview tutorial
         </button>
         {!readyForPreview && (
