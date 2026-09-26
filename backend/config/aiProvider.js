@@ -50,43 +50,6 @@ async function callModel(systemPrompt, messages) {
   throw new Error(`Unknown AI_PROVIDER "${PROVIDER}" — set it to "gemini" or "anthropic" in .env`);
 }
 
-// async function callGemini(systemPrompt, messages) {
-//   const apiKey = process.env.GEMINI_API_KEY;
-//   if (!apiKey) {
-//     throw new Error("GEMINI_API_KEY is not set in .env — get a free key at aistudio.google.com");
-//   }
-//   const model = process.env.GEMINI_MODEL || "gemini-3.6-flash";
-
-//   const contents = messages.map((m) => ({
-//     role: m.role === "assistant" ? "model" : "user",
-//     parts: [{ text: m.content }],
-//   }));
-
-//   const res = await fetch(
-//     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
-//     {
-//       method: "POST",
-//       headers: { "Content-Type": "application/json" },
-//       body: JSON.stringify({
-//         systemInstruction: { parts: [{ text: systemPrompt }] },
-//         contents,
-//       }),
-//     }
-//   );
-
-//   if (!res.ok) {
-//     const body = await res.text();
-//     throw new Error(`Gemini API error (${res.status}): ${body}`);
-//   }
-
-//   const data = await res.json();
-//   const reply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-//   if (!reply) {
-//     throw new Error("Gemini returned no usable reply — check the response shape hasn't changed.");
-//   }
-//   return reply;
-// }
-
 async function callGemini(systemPrompt, messages) {
   const apiKey = process.env.GEMINI_API_KEY;
 
